@@ -14,6 +14,7 @@ namespace BonVoyage
 
 		private bool mapLocationMode;
 		private bool pathFindingTestMode;
+		private bool showUtils = false;
 		private ControlTypes lockMask = (
 			ControlTypes.YAW |
 			ControlTypes.PITCH |
@@ -50,102 +51,52 @@ namespace BonVoyage
 		[KSPField(isPersistant = true, guiName = "Average speed", guiActive = true)]
 		public double averageSpeed = 0;
 
-		[KSPField(isPersistant = true, guiName = "Last Updated", guiActive = true)]
+		[KSPField(isPersistant = true, guiName = "Last Updated", guiActive = false)]
 		public double lastTime = 0;
 
-		[KSPField(isPersistant = true, guiName = "Solar powered", guiActive = true)]
+		[KSPField(isPersistant = true, guiName = "Solar powered", guiActive = false)]
 		public bool solarPowered = true;
 
-		[KSPField(isPersistant = true)]
-		public ConfigNode pathNodeList;
-//		[KSPField(isPersistant = true)]
-//		public List<PathNode> pathNodes;
+		[KSPField(isPersistant = true, guiName = "pathEncoded", guiActive = false)]
+		public string pathEncoded = "";
 
-		//[KSPField(isPersistant = true, guiName = "Path nodes", guiActive = true)]
-//		[Serializable]
-/*
-		[Serializable]
-		public class PathNodeList : IConfigNode {
-
-			public PathNodeList() {
-				
-			}
-
-			public void Load(ConfigNode node) {
-				
-			}
-
-			public void Save(ConfigNode nodeList) {
-				foreach(var node in nodeList.GetNodes("pathNode")) {
-					config
-				}
-			}
-		}
-*/
-		[Serializable]
-		public class PathNode : IConfigNode {
-			[SerializeField]
-			public double latitude = 0;
-
-			[SerializeField]
-			public double longitude = 0;
-
-			[SerializeField]
-			public double distance = 0;
-
-			public void Load(ConfigNode node) {
-				double value;
-				if (node.HasValue ("latitude") && double.TryParse (node.GetValue ("latitude"), out value))
-					latitude = value;
-
-				if (node.HasValue ("longitude") && double.TryParse (node.GetValue ("longitude"), out value))
-					longitude = value;
-			}
-
-			public void Save(ConfigNode node) {
-				node.AddValue ("latitude", latitude);
-				node.AddValue ("longitude", longitude);
-			}
+		[KSPEvent(guiActive = true, guiName = "Pick target on map")]
+		public void PickTarget() {
+			if (this.vessel.situation != Vessel.Situations.LANDED)
+				return;
+			Deactivate ();
+			MapView.EnterMapView();
+			mapLocationMode = true;
 		}
 
-		/*
-		[Serializable]
-		public class ModulePath : IConfigNode {
-			[SerializeField]
-			List<PathNode> path;
-		}*/
+		[KSPEvent(guiActive = true, guiName = "Set to active target")]
+		public void SetToActive() {
+			if (this.vessel.targetObject == null || this.vessel.situation != Vessel.Situations.LANDED)
+				return;
+			Vessel targetVessel = this.vessel.targetObject.GetVessel ();
+			if (targetVessel == null) {
+				ScreenMessages.PostScreenMessage ("Target some suitable vessel first!");
+				return;
+			}
 
-		[KSPEvent(guiActive = true, guiName = "Calculate solar")]
-		public void CalculateSolar() {
-			double solarPower = CalculateSolarPower ();
-			ScreenMessages.PostScreenMessage (String.Format("{0:F} electric charge/second", solarPower));
-		}
+			if (targetVessel.mainBody == this.vessel.mainBody && targetVessel.situation == Vessel.Situations.LANDED) {
+				this.distanceToTarget = GeoUtils.GetDistance (
+					this.vessel.latitude, this.vessel.longitude, targetVessel.latitude, targetVessel.longitude, this.vessel.mainBody.Radius
+				);
 
-		[KSPEvent(guiActive = true, guiName = "Calculate other")]
-		public void CalculateOther() {
-			double otherPower = CalculateOtherPower ();
-			ScreenMessages.PostScreenMessage (String.Format("{0:F} electric charge/second", otherPower));
-		}
-
-		[KSPEvent(guiActive = true, guiName = "Calculate path")]
-		public void FindPath() {
-			distanceToTarget = 0;
-			dots.Clear ();
-			PathFinder finder = new PathFinder (
-				this.vessel.latitude,
-				this.vessel.longitude,
-				targetLatitude,
-				targetLongitude,
-				this.vessel.mainBody
-			);
-//			finder.FindPath ();
-//			pathFound = finder.StraightPath();
-			distanceToTarget = finder.StraightPath();
-			if (distanceToTarget > 0) {
-//				distanceToTarget = finder.GetDistance ();
-				dots = finder.GetDots ();
-			} else
-				ScreenMessages.PostScreenMessage ("No straight path found, try another point");
+				double bearing = GeoUtils.InitialBearing (this.vessel.latitude, this.vessel.longitude, targetVessel.latitude, targetVessel.longitude);
+				// We don't want to spawn inside vessel
+				if (distanceToTarget == 0)
+					return;
+				this.distanceToTarget -= 200;
+				double[] newCoordinates = GeoUtils.GetLatitudeLongitude (this.vessel.latitude, this.vessel.longitude, bearing, distanceToTarget, this.vessel.mainBody.Radius);
+				this.targetLatitude = newCoordinates [0];
+				this.targetLongitude = newCoordinates [1];
+				this.distanceTravelled = 0;
+				FindPath();
+			} else {
+				ScreenMessages.PostScreenMessage ("Your target is out there somewhere, this won't work!");
+			}
 		}
 
 		[KSPEvent(guiActive = true, guiName = "Poehali!!!")]
@@ -170,13 +121,15 @@ namespace BonVoyage
 				ModuleWheels.ModuleWheelMotor wheelMotor = part.FindModuleImplementing<ModuleWheels.ModuleWheelMotor> ();
 				if (wheelMotor != null) {
 					ModuleWheels.ModuleWheelDamage wheelDamage = part.FindModuleImplementing<ModuleWheels.ModuleWheelDamage> ();
-					if (wheelDamage.isDamaged) {
-						ScreenMessages.PostScreenMessage ("Some wheels are broken, we're stuck!");
-						return;
-					}
-					if(wheelDamage.currentDownForce == 0) {
-						inTheAir++;
-						continue;
+					if (wheelDamage != null) { // Malemute and Karibou wheels do not implement moduleDamage, thus making this mod cheaty
+						if (wheelDamage.isDamaged) {
+							ScreenMessages.PostScreenMessage ("Some wheels are broken, we're stuck!");
+							return;
+						}
+						if (wheelDamage.currentDownForce == 0) {
+							inTheAir++;
+							continue;
+						}
 					}
 					powerRequired += wheelMotor.inputResource.rate;
 					this.averageSpeed = Math.Max(this.averageSpeed, GetAverageSpeed (wheelMotor));
@@ -218,8 +171,6 @@ namespace BonVoyage
 			distanceTravelled = 0;
 			Events ["Activate"].active = false;
 			Events ["Deactivate"].active = true;
-			
-//			InputLockManager.SetControlLock (lockMask, "BonVoyageInputLock");
 		}
 
 		[KSPEvent(guiActive = true, guiName = "Deactivate", active = false)]
@@ -232,49 +183,56 @@ namespace BonVoyage
 			distanceToTarget = 0;
 			Events ["Activate"].active = true;
 			Events ["Deactivate"].active = false;
-//			InputLockManager.RemoveControlLock ("BonVoyageInputLock");
 		}
 
-		[KSPEvent(guiActive = true, guiName = "Pick target on map")]
-		public void PickTarget() {
-			if (this.vessel.situation != Vessel.Situations.LANDED)
-				return;
-			Deactivate ();
-			MapView.EnterMapView();
-			mapLocationMode = true;
+		[KSPEvent(guiActive = true, guiName = "Toggle utilities")]
+		public void ToggleUtils() {
+			showUtils = !showUtils;
+			Events ["CalculateSolar"].active = showUtils;
+			Events ["CalculateOther"].active = showUtils;
+//			Events ["FindPath"].guiActive = false;
+//			Fields ["solarPowered"].guiActive = false;
+//			Fields ["lastActive"].guiActive = false;
+//			Fields ["averageSpeed"].guiActive = false;
 		}
 
-		[KSPEvent(guiActive = true, guiName = "Set to active target")]
-		public void SetToActive() {
-			if (this.vessel.targetObject == null || this.vessel.situation != Vessel.Situations.LANDED)
-				return;
-			Vessel targetVessel = this.vessel.targetObject.GetVessel ();
-			if (targetVessel == null) {
-				ScreenMessages.PostScreenMessage ("Target some suitable vessel first!");
-				return;
-			}
+		[KSPEvent(guiActive = false, guiName = "Calculate path")]
+		public void FindPath() {
+			distanceToTarget = 0;
+			dots.Clear ();
 
-			if (targetVessel.mainBody == this.vessel.mainBody && targetVessel.situation == Vessel.Situations.LANDED) {
-				this.distanceToTarget = GeoUtils.GetDistance (
-					this.vessel.latitude, this.vessel.longitude, targetVessel.latitude, targetVessel.longitude, this.vessel.mainBody.Radius
-				);
-
-				double bearing = GeoUtils.InitialBearing (this.vessel.latitude, this.vessel.longitude, targetVessel.latitude, targetVessel.longitude);
-				// We don't want to spawn inside vessel
-				FindPath();
-				if (distanceToTarget == 0)
-					return;
-				this.distanceToTarget -= 200;
-				double[] newCoordinates = GeoUtils.GetLatitudeLongitude (this.vessel.latitude, this.vessel.longitude, bearing, distanceToTarget, this.vessel.mainBody.Radius);
-				this.targetLatitude = newCoordinates [0];
-				this.targetLongitude = newCoordinates [1];
-				this.distanceTravelled = 0;
-			} else {
-				ScreenMessages.PostScreenMessage ("Your target is out there somewhere, this won't work!");
-			}
+			PathFinder finder = new PathFinder (
+				this.vessel.latitude,
+				this.vessel.longitude,
+				targetLatitude,
+				targetLongitude,
+				this.vessel.mainBody
+			);
+			finder.FindPath ();
+			//			pathFound = finder.StraightPath();
+			//			distanceToTarget = finder.StraightPath();
+			distanceToTarget = finder.GetDistance ();
+			if (distanceToTarget > 0) {
+				pathEncoded = finder.EncodePath ();
+				dots = finder.GetDots ();
+			} else
+				//				ScreenMessages.PostScreenMessage ("No straight path found, try another point");
+				ScreenMessages.PostScreenMessage("No path found, bye!");
 		}
 
-		[KSPEvent(guiActive = true, guiName = "Pathfinding test")]
+		[KSPEvent(guiActive = false, guiName = "Calculate solar")]
+		public void CalculateSolar() {
+			double solarPower = CalculateSolarPower ();
+			ScreenMessages.PostScreenMessage (String.Format("{0:F} electric charge/second", solarPower));
+		}
+
+		[KSPEvent(guiActive = false, guiName = "Calculate other")]
+		public void CalculateOther() {
+			double otherPower = CalculateOtherPower ();
+			ScreenMessages.PostScreenMessage (String.Format("{0:F} electric charge/second", otherPower));
+		}
+
+		[KSPEvent(guiActive = false, guiName = "Pathfinding test")]
 		public void PickTest() {
 			if (this.vessel.situation != Vessel.Situations.LANDED)
 				return;
@@ -294,6 +252,7 @@ namespace BonVoyage
 				this.vessel.mainBody
 			);
 			finder.FindPath ();
+			pathEncoded = finder.EncodePath ();
 //			distanceToTravel = finder.GetDistance ();
 			dots = finder.GetDots ();
 		}
@@ -316,6 +275,9 @@ namespace BonVoyage
 		}
 
 		public void OnGUI() {
+			if (HighLogic.LoadedSceneIsEditor)
+				return;
+			
 			if (this.vessel.isActiveVessel && this.isActive) {
 				GUILayout.BeginArea (guiRect, labelStyle);
 				GUILayout.Label ("Bon Voyage control lock active", labelStyle);
@@ -332,6 +294,7 @@ namespace BonVoyage
 			if (MapView.MapIsEnabled) {
 				if (dots.Count > 0) {
 					// draw dots
+//					int i = 0;
 					foreach (var dot in dots) {
 //						var localSpacePoint = this.vessel.mainBody.GetWorldSurfacePosition (dot [0], dot [1], this.vessel.mainBody.Radius);
 						var scaledSpacePoint = ScaledSpace.LocalToScaledSpace (dot);
@@ -342,7 +305,8 @@ namespace BonVoyage
 								(float)scaledSpacePoint.z
 							)
 						);
-						GUI.Label (new Rect (screenPos.x, Screen.height - screenPos.y, 16, 16), "x");
+						GUI.Label (new Rect (screenPos.x, Screen.height - screenPos.y, 16, 16), "x");//i.ToString ());
+//						i++;
 					}
 				}
 			}

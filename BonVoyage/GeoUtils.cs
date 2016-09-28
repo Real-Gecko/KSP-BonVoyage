@@ -41,6 +41,13 @@ namespace BonVoyage
 			return distance;
 		}
 
+		// Alternative haversine distance implementation
+		// https://www.kaggle.com/c/santas-stolen-sleigh/forums/t/18049/simpler-faster-haversine-distance
+/*		public static double GetDistanceAlt()
+		{
+		}
+*/
+
 		// Bearing from start to end
 		// http://www.movable-type.co.uk/scripts/latlong.html
 		internal static double InitialBearing(double startLatitude, double startLongitude, double targetLatitude, double targetLongitude)

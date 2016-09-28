@@ -50,8 +50,10 @@ namespace BonVoyage
 				var path = queue.Dequeue();
 				if (closed.Contains(path.LastStep))
 					continue;
-				if (path.LastStep.Equals(destination))
+				if (path.LastStep.Equals (destination)) {
+//					path.Reverse (); // Don't ask me...
 					return path;
+				}
 				closed.Add(path.LastStep);
 				foreach(Node n in path.LastStep.Neighbours)
 				{

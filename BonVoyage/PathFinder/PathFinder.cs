@@ -187,7 +187,22 @@ namespace BonVoyage
 //				GUI.Label (new Rect (screenPos.x, Screen.height - screenPos.y, 16, 16), "V");
 				dots.Add(localSpacePoint);
 			}
+//			dots.Reverse (); // Don't ask me...
 			return dots;
 		}
+
+		public string EncodePath() {
+//			int i = 0;
+			string result = "";
+			foreach (var point in path) {
+//				result += i.ToString () + ":" + point.Latitude.ToString () + ":" + point.Longitude.ToString() + ";";
+//				result += DoubleToLongBits(point.Latitude) + ":" + DoubleToLongBits(point.Longitude) + ";";
+//				i++;
+				result += point.Latitude.ToString("R") + ":" + point.Longitude.ToString("R") +";";
+			}
+//			result = BVUtils.Base64Encode (result);
+			return result;
+		}
+
 	}
 }
