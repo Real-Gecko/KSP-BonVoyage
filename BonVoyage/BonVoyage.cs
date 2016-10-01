@@ -212,9 +212,10 @@ namespace BonVoyage
 				rover.lastTime = currentTime;
 
 				// Save data to protovessel
-				rover.vesselConfigNode.SetValue ("lat", rover.vessel.latitude.ToString());
-				rover.vesselConfigNode.SetValue ("lon", rover.vessel.longitude.ToString());
-				rover.vesselConfigNode.SetValue ("alt", rover.vessel.altitude.ToString ());
+				rover.vesselConfigNode.SetValue("lat", rover.vessel.latitude.ToString());
+				rover.vesselConfigNode.SetValue("lon", rover.vessel.longitude.ToString());
+				rover.vesselConfigNode.SetValue("alt", rover.vessel.altitude.ToString());
+				rover.vesselConfigNode.SetValue("landedAt", rover.vessel.mainBody.bodyName);
 				rover.BVModule.SetValue ("distanceTravelled", (rover.distanceTravelled).ToString ());
 				rover.BVModule.SetValue ("lastTime", currentTime.ToString ());
 				rover.vessel.protoVessel = new ProtoVessel(rover.vesselConfigNode, HighLogic.CurrentGame);
