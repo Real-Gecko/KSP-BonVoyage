@@ -8,18 +8,6 @@ namespace BonVoyage
 	{
 		private bool mapLocationMode;
 		private bool showUtils = false;
-		private ControlTypes lockMask = (
-			ControlTypes.YAW |
-			ControlTypes.PITCH |
-			ControlTypes.ROLL |
-			ControlTypes.THROTTLE |
-			ControlTypes.STAGING |
-			ControlTypes.CUSTOM_ACTION_GROUPS |
-			ControlTypes.GROUPS_ALL |
-			ControlTypes.RCS |
-			ControlTypes.WHEEL_STEER |
-			ControlTypes.WHEEL_THROTTLE
-		);
 
 		private List<Vector3d> dots;
 
@@ -77,6 +65,7 @@ namespace BonVoyage
 
 			if (targetVessel.mainBody == this.vessel.mainBody && targetVessel.situation == Vessel.Situations.LANDED)
 			{
+				Deactivate();
 				this.distanceToTarget = GeoUtils.GetDistance(
 					this.vessel.latitude, this.vessel.longitude, targetVessel.latitude, targetVessel.longitude, this.vessel.mainBody.Radius
 				);
@@ -182,21 +171,21 @@ namespace BonVoyage
 			if (otherPower >= powerRequired)
 				solarPowered = false;
 
-			ScreenMessages.PostScreenMessage("Bon Voyage!!!");
 			isActive = true;
 			lastTime = Planetarium.GetUniversalTime();
-			distanceToTarget = GeoUtils.GetDistance(
+/*			distanceToTarget = GeoUtils.GetDistance(
 				this.vessel.latitude, this.vessel.longitude, targetLatitude, targetLongitude, this.vessel.mainBody.Radius
-			);
+			);*/
 			distanceTravelled = 0;
 			Events["Activate"].active = false;
 			Events["Deactivate"].active = true;
+			BonVoyage.Instance.UpdateRoverState(this.vessel, true);
+			ScreenMessages.PostScreenMessage("Bon Voyage!!!");
 		}
 
 		[KSPEvent(guiActive = true, guiName = "Deactivate", active = false)]
 		public void Deactivate()
 		{
-			ScreenMessages.PostScreenMessage("Thank you for using \"Bon Voyage Roverlines\"");
 			isActive = false;
 			targetLatitude = 0;
 			targetLongitude = 0;
@@ -204,6 +193,7 @@ namespace BonVoyage
 			distanceToTarget = 0;
 			Events["Activate"].active = true;
 			Events["Deactivate"].active = false;
+			BonVoyage.Instance.UpdateRoverState(this.vessel, false);
 		}
 
 		[KSPEvent(guiActive = true, guiName = "Toggle utilities")]
@@ -228,13 +218,9 @@ namespace BonVoyage
 				Events["PickTest"].guiActive = false;
 				Events["PickTest"].active = false;
 			}
-			//			Fields ["solarPowered"].guiActive = false;
-			//			Fields ["lastActive"].guiActive = false;
-			//			Fields ["averageSpeed"].guiActive = false;
 		}
 
-//		[KSPEvent(guiActive = false, guiName = "Calculate path")]
-		public void FindPath()
+		private void FindPath()
 		{
 			distanceToTarget = 0;
 			dots.Clear();
@@ -247,8 +233,6 @@ namespace BonVoyage
 				this.vessel.mainBody
 			);
 			finder.FindPath();
-			//			pathFound = finder.StraightPath();
-			//			distanceToTarget = finder.StraightPath();
 			distanceToTarget = finder.GetDistance();
 			if (distanceToTarget > 0)
 			{
@@ -256,7 +240,6 @@ namespace BonVoyage
 				dots = finder.GetDots();
 			}
 			else
-				//				ScreenMessages.PostScreenMessage ("No straight path found, try another point");
 				ScreenMessages.PostScreenMessage("No path found, bye!");
 		}
 
@@ -317,7 +300,10 @@ namespace BonVoyage
 
 		public override void OnStart(PartModule.StartState state)
 		{
-			guiRect = new Rect(0, 0, Screen.width, Screen.height);
+			if (HighLogic.LoadedSceneIsEditor)
+				return;
+			
+			guiRect = new Rect(0, 0, Screen.width, Screen.height / 2);
 			labelStyle = new GUIStyle();
 			labelStyle.stretchWidth = true;
 			labelStyle.stretchHeight = true;
@@ -333,17 +319,6 @@ namespace BonVoyage
 			if (HighLogic.LoadedSceneIsEditor)
 				return;
 
-			if (this.vessel.isActiveVessel && this.isActive)
-			{
-				GUILayout.BeginArea(guiRect, labelStyle);
-				GUILayout.Label("Bon Voyage control lock active", labelStyle);
-				GUILayout.EndArea();
-				InputLockManager.SetControlLock(lockMask, "BonVoyageInputLock");
-			}
-			else {
-				InputLockManager.RemoveControlLock("BonVoyageInputLock");
-			}
-
 			if (isActive)
 			{
 				lastTime = Planetarium.GetUniversalTime();
@@ -353,8 +328,6 @@ namespace BonVoyage
 			{
 				if (dots.Count > 0)
 				{
-					// draw dots
-					//					int i = 0;
 					foreach (var dot in dots)
 					{
 						//						var localSpacePoint = this.vessel.mainBody.GetWorldSurfacePosition (dot [0], dot [1], this.vessel.mainBody.Radius);
@@ -366,8 +339,9 @@ namespace BonVoyage
 								(float)scaledSpacePoint.z
 							)
 						);
-						GUI.Label(new Rect(screenPos.x, Screen.height - screenPos.y, 16, 16), "x");//i.ToString ());
-																								   //						i++;
+						GUI.Label(new Rect(screenPos.x - 8, Screen.height - screenPos.y - 8, 16, 16), "x");//i.ToString ());
+//						var screenRect = new Rect((screenPos.x - 5), (Screen.height - screenPos.y) - 5, 10, 10);
+//						GUI.DrawTexture(screenRect, BonVoyage.Instance.mapMarker);
 					}
 				}
 			}
@@ -500,12 +474,12 @@ namespace BonVoyage
 					double error = Math.Abs(curRadius - alt);
 					if (error < (targetBody.pqsController.radiusMax - targetBody.pqsController.radiusMin) / 100)
 					{
-						this.targetLatitude = (targetBody.GetLatitude(surfacePoint) + 360) % 360;
-						this.targetLongitude = (targetBody.GetLongitude(surfacePoint) + 360) % 360;
-						this.distanceToTarget = GeoUtils.GetDistance(
+						targetLatitude = (targetBody.GetLatitude(surfacePoint) + 360) % 360;
+						targetLongitude = (targetBody.GetLongitude(surfacePoint) + 360) % 360;
+/*						this.distanceToTarget = GeoUtils.GetDistance(
 							this.vessel.latitude, this.vessel.longitude, this.targetLatitude, this.targetLongitude, this.vessel.mainBody.Radius
 						);
-						this.distanceTravelled = 0;
+						this.distanceTravelled = 0;*/
 						return;
 					}
 					else

@@ -2,6 +2,19 @@
 Rovers background processing for KSP.
 
 # Changelog
+## 0.10.1
+- Fixed control lock being applied to next switched vessel
+- Moved "Bon Voyage control lock active" message higher on screen
+- SAS is blocked by control lock too
+- Path markers displayed at correct positions
+- Fixed trying to build path to target closer than 1000 meters
+- Fixed "yet to travel" distance for rovers awaiting sunlight being incorrect after scene switch
+- Current rover changes in GUI list on vessel switch
+- Fixed distance to target being incorrect if path is not staright
+- Fixed errors raised at rover journey end when no/low time acceleration
+- Fixed error switching to rover from Space Center
+- Added ARES and Puma support
+
 ## 0.10.0
 - Fixed BV controller part being not in Control tab
 - Shut down wheels are not treated as power consumers

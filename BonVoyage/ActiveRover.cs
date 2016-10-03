@@ -43,6 +43,10 @@ namespace BonVoyage
 			if (BVPart == null)
 				BVPart = vesselConfigNode.GetNode ("PART", "name", "WBI.BuffaloCab");
 			if (BVPart == null)
+				BVPart = vesselConfigNode.GetNode("PART", "name", "ARESrovercockpit");
+			if (BVPart == null)
+				BVPart = vesselConfigNode.GetNode("PART", "name", "Puma Pod");
+			if (BVPart == null)
 				return;
 
 			BVModule = BVPart.GetNode ("MODULE", "name", "BonVoyageModule");
@@ -71,10 +75,12 @@ namespace BonVoyage
 			foreach (var wp in wps) {
 				string[] latlon = wp.Split (':');
 				path.Add (new WayPoint (double.Parse(latlon [0]), double.Parse(latlon [1])));
-//				path.Add(new WayPoint(LongBitsToDouble(latlon[0]), LongBitsToDouble(latlon[1])));
 			}
 			path.Reverse (); // Don't ask me...
 		}
+
+		public double yetToTravel {
+			get { return distanceToTarget - distanceTravelled; }
+		}
 	}
 }
-

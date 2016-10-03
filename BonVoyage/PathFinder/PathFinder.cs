@@ -67,6 +67,7 @@ namespace BonVoyage
 
 		public double StraightPath() {
 			double distanceToTarget = GeoUtils.GetDistance (startLatitude, startLongitude, targetLatitude, targetLongitude, mainBody.Radius);
+//			if (distanceToTarget < 1000) return;
 			double bearing = GeoUtils.InitialBearing (startLatitude, startLongitude, targetLatitude, targetLongitude);
 			double altitude = GeoUtils.TerrainHeightAt (startLatitude, startLongitude, mainBody);
 			int x = 0;
@@ -96,6 +97,7 @@ namespace BonVoyage
 
 		public void FindPath() {
 			double distanceToTarget = GeoUtils.GetDistance (startLatitude, startLongitude, targetLatitude, targetLongitude, mainBody.Radius);
+			if (distanceToTarget < 1000) return;
 			double bearing = GeoUtils.InitialBearing (startLatitude, startLongitude, targetLatitude, targetLongitude);
 			double altitude = GeoUtils.TerrainHeightAt (startLatitude, startLongitude, mainBody);
 			int x = 0;
