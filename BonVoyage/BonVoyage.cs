@@ -197,7 +197,6 @@ namespace BonVoyage
 					rover.targetLatitude,
 					rover.targetLongitude
 				);
-
 				rover.distanceTravelled += deltaS;
 				if (rover.distanceTravelled >= rover.distanceToTarget)
 				{
@@ -233,27 +232,27 @@ namespace BonVoyage
 					rover.status = "idle";
 				}
 				else {
-					int steps = Convert.ToInt32(Math.Floor(rover.distanceTravelled / 1000));
+					int step = Convert.ToInt32(Math.Floor(rover.distanceTravelled / 1000));
 					double remainder = rover.distanceTravelled % 1000;
 
-					if (steps < rover.path.Count)
+					if (step < rover.path.Count - 1)
 						bearing = GeoUtils.InitialBearing(
-							rover.path[steps].latitude,
-							rover.path[steps].longitude,
-							rover.path[steps + 1].latitude,
-							rover.path[steps + 1].longitude
+							rover.path[step].latitude,
+							rover.path[step].longitude,
+							rover.path[step + 1].latitude,
+							rover.path[step + 1].longitude
 						);
 					else
 						bearing = GeoUtils.InitialBearing(
-							rover.path[steps].latitude,
-							rover.path[steps].longitude,
+							rover.path[step].latitude,
+							rover.path[step].longitude,
 							rover.targetLatitude,
 							rover.targetLongitude
 						);
 
 					double[] newCoordinates = GeoUtils.GetLatitudeLongitude(
-						rover.path[steps].latitude,
-						rover.path[steps].longitude,
+						rover.path[step].latitude,
+						rover.path[step].longitude,
 						bearing,
 						remainder,
 						rover.vessel.mainBody.Radius

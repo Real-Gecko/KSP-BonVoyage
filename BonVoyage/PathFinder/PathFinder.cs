@@ -167,7 +167,11 @@ namespace BonVoyage
 
 		public double GetDistance() {
 			if (path != null)
-				return path.TotalCost;
+			{
+				Hex destination = path.LastStep;
+				double appendix = GeoUtils.GetDistance(destination.Latitude, destination.Longitude, targetLatitude, targetLongitude, mainBody.Radius);
+				return path.TotalCost + appendix;
+			}
 			else
 				return 0;
 		}

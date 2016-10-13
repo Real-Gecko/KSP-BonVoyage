@@ -2,6 +2,10 @@
 Rovers background processing for KSP.
 
 # Changelog
+## 0.10.2
+- Recompile for KSP 1.2
+- Fixed last waypoint being last step of voyage
+
 ## 0.10.1
 - Fixed control lock being applied to next switched vessel
 - Moved "Bon Voyage control lock active" message higher on screen

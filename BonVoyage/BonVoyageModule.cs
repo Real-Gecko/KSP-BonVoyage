@@ -86,7 +86,7 @@ namespace BonVoyage
 			}
 		}
 
-		[KSPEvent(guiActive = true, guiName = "Poehali!!!")]
+		[KSPEvent(guiActive = true, guiName = "Poehali!!!", isPersistent = true)]
 		public void Activate()
 		{
 			if (distanceToTarget == 0)
@@ -128,7 +128,8 @@ namespace BonVoyage
 					}
 					if (wheelMotor.motorEnabled)
 					{
-						powerRequired += wheelMotor.inputResource.rate;
+						//						powerRequired += wheelMotor.inputResource.rate;
+						powerRequired += wheelMotor.avgResRate;
 					}
 					operableWheels.Add(wheelMotor);
 				}
@@ -183,7 +184,7 @@ namespace BonVoyage
 			ScreenMessages.PostScreenMessage("Bon Voyage!!!");
 		}
 
-		[KSPEvent(guiActive = true, guiName = "Deactivate", active = false)]
+		[KSPEvent(guiActive = true, guiName = "Deactivate", active = false, isPersistent = true)]
 		public void Deactivate()
 		{
 			isActive = false;
@@ -284,7 +285,8 @@ namespace BonVoyage
 				if (wheelMotor != null)
 				{
 					if (wheelMotor.motorEnabled)
-						powerRequired += wheelMotor.inputResource.rate;
+						//						powerRequired += wheelMotor.inputResource.rate;
+						powerRequired += wheelMotor.avgResRate;
 				}
 			}
 
@@ -410,7 +412,8 @@ namespace BonVoyage
 				ModuleDeployableSolarPanel solarPanel = part.FindModuleImplementing<ModuleDeployableSolarPanel>();
 				if (solarPanel == null)
 					continue;
-				if (solarPanel.panelState != ModuleDeployableSolarPanel.panelStates.BROKEN)
+//				if (solarPanel.panelState != ModuleDeployableSolarPanel.panelStates.BROKEN)
+				if (solarPanel.deployState != ModuleDeployableSolarPanel.DeployState.BROKEN)
 				{
 					if (solarPanel.useCurve)
 					{
@@ -435,7 +438,8 @@ namespace BonVoyage
 					continue;
 				if (powerModule.generatorIsActive || powerModule.isAlwaysActive)
 				{
-					foreach (var resource in powerModule.outputList)
+//					foreach (var resource in powerModule.outputList)
+					foreach (var resource in powerModule.resHandler.outputResources)
 					{
 						if (resource.name == "ElectricCharge")
 						{
