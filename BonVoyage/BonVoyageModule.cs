@@ -9,9 +9,9 @@ namespace BonVoyage
 		private bool mapLocationMode;
 		private bool showUtils = false;
 
-		private List<Vector3d> dots;
+		private List<Vector3d> wayPoints;
 
-		private Rect guiRect;
+//		private Rect guiRect;
 		private GUIStyle labelStyle;
 
 		[KSPField(isPersistant = true, guiName = "Active", guiActive = true)]
@@ -38,6 +38,9 @@ namespace BonVoyage
 		[KSPField(isPersistant = true, guiName = "Solar powered", guiActive = false)]
 		public bool solarPowered = true;
 
+		[KSPField(isPersistant = true, guiName = "Is manned", guiActive = false)]
+		public bool isManned = true;
+
 		[KSPField(isPersistant = true, guiName = "pathEncoded", guiActive = false)]
 		public string pathEncoded = "";
 
@@ -54,8 +57,10 @@ namespace BonVoyage
 		[KSPEvent(guiActive = true, guiName = "Set to active target")]
 		public void SetToActive()
 		{
+			ScreenMessages.PostScreenMessage (this.vessel.targetObject != null ? "target" : "no target");
 			if (this.vessel.targetObject == null || this.vessel.situation != Vessel.Situations.LANDED)
 				return;
+
 			Vessel targetVessel = this.vessel.targetObject.GetVessel();
 			if (targetVessel == null)
 			{
@@ -83,6 +88,20 @@ namespace BonVoyage
 			}
 			else {
 				ScreenMessages.PostScreenMessage("Your target is out there somewhere, this won't work!");
+			}
+		}
+
+		[KSPEvent(guiActive = true, guiName = "Set to active waypoint", isPersistent = true)]
+		private void SetToWaypoint() {
+			NavWaypoint navPoint = NavWaypoint.fetch;
+			if (navPoint == null || !navPoint.IsActive || navPoint.Body != this.vessel.mainBody) {
+				ScreenMessages.PostScreenMessage ("No valid nav point");
+			} else {
+				Deactivate();
+				this.targetLatitude = navPoint.Latitude;
+				this.targetLongitude = navPoint.Longitude;
+				this.distanceTravelled = 0;
+				FindPath();
 			}
 		}
 
@@ -138,22 +157,32 @@ namespace BonVoyage
 			// Average speed will vary depending on number of wheels online from 50 to 70 percent of wheel max speed
 			this.averageSpeed = GetAverageSpeed(operableWheels);
 
+			// Looks like no wheels are on
 			if (this.averageSpeed == 0)
 			{
 				ScreenMessages.PostScreenMessage("At least two wheels must be online!");
 				return;
 			}
 
+			// No driving until 4 operable wheels are touching the ground
 			if (inTheAir > 0 && operableWheels.Count < 4)
 			{
 				ScreenMessages.PostScreenMessage("Wheels are not touching the ground, are you serious???");
 				return;
 			}
 
+			// What???
 			if (operableWheels.Count < 4)
 			{
 				ScreenMessages.PostScreenMessage("Monocycles, bicycles and trycicles are not supported, bye!");
 				return;
+			}
+
+			// Unmanned rovers drive with 80% speed penalty
+			this.isManned = (this.vessel.GetCrewCount () > 0);
+			if (!this.isManned) {
+				averageSpeed = averageSpeed * 0.2;
+				ScreenMessages.PostScreenMessage ("Rover is unmanned, 80% speed penalty!");
 			}
 
 			// Generally moving at high speed requires less power than wheels' max consumption
@@ -169,6 +198,8 @@ namespace BonVoyage
 				return;
 			}
 
+			// If alternative power sources produce more then required
+			// Rover will ride forever :D
 			if (otherPower >= powerRequired)
 				solarPowered = false;
 
@@ -192,6 +223,7 @@ namespace BonVoyage
 			targetLongitude = 0;
 			distanceTravelled = 0;
 			distanceToTarget = 0;
+			wayPoints.Clear ();
 			Events["Activate"].active = true;
 			Events["Deactivate"].active = false;
 			BonVoyage.Instance.UpdateRoverState(this.vessel, false);
@@ -224,7 +256,7 @@ namespace BonVoyage
 		private void FindPath()
 		{
 			distanceToTarget = 0;
-			dots.Clear();
+//			wayPoints.Clear();
 
 			PathFinder finder = new PathFinder(
 				this.vessel.latitude,
@@ -237,8 +269,8 @@ namespace BonVoyage
 			distanceToTarget = finder.GetDistance();
 			if (distanceToTarget > 0)
 			{
-				pathEncoded = finder.EncodePath();
-				dots = finder.GetDots();
+				pathEncoded = PathUtils.EncodePath(finder.path);
+				wayPoints = PathUtils.DecodePath (pathEncoded, this.vessel.mainBody);
 			}
 			else
 				ScreenMessages.PostScreenMessage("No path found, bye!");
@@ -278,7 +310,7 @@ namespace BonVoyage
 		public void CalculatePowerRequirement()
 		{
 			double powerRequired = 0;
-			List<ModuleWheels.ModuleWheelMotor> operableWheels = new List<ModuleWheels.ModuleWheelMotor>();
+//			List<ModuleWheels.ModuleWheelMotor> operableWheels = new List<ModuleWheels.ModuleWheelMotor>();
 			foreach (var part in this.vessel.parts)
 			{
 				ModuleWheels.ModuleWheelMotor wheelMotor = part.FindModuleImplementing<ModuleWheels.ModuleWheelMotor>();
@@ -305,7 +337,7 @@ namespace BonVoyage
 			if (HighLogic.LoadedSceneIsEditor)
 				return;
 			
-			guiRect = new Rect(0, 0, Screen.width, Screen.height / 2);
+//			guiRect = new Rect(0, 0, Screen.width, Screen.height / 2);
 			labelStyle = new GUIStyle();
 			labelStyle.stretchWidth = true;
 			labelStyle.stretchHeight = true;
@@ -313,38 +345,25 @@ namespace BonVoyage
 			labelStyle.fontSize = Screen.height / 20;
 			labelStyle.fontStyle = FontStyle.Bold;
 			labelStyle.normal.textColor = Color.red;
-			dots = new List<Vector3d>();
+			wayPoints = PathUtils.DecodePath (pathEncoded, this.vessel.mainBody);
 		}
 
-		public void OnGUI()
+		private void Update() {
+			if (isActive)
+				lastTime = Planetarium.GetUniversalTime();
+		}
+
+		private void OnGUI()
 		{
 			if (HighLogic.LoadedSceneIsEditor)
 				return;
 
-			if (isActive)
-			{
-				lastTime = Planetarium.GetUniversalTime();
-			}
 
 			if (MapView.MapIsEnabled)
 			{
-				if (dots.Count > 0)
+				if (wayPoints.Count > 0)
 				{
-					foreach (var dot in dots)
-					{
-						//						var localSpacePoint = this.vessel.mainBody.GetWorldSurfacePosition (dot [0], dot [1], this.vessel.mainBody.Radius);
-						var scaledSpacePoint = ScaledSpace.LocalToScaledSpace(dot);
-						var screenPos = PlanetariumCamera.Camera.WorldToScreenPoint(
-							new Vector3(
-								(float)scaledSpacePoint.x,
-								(float)scaledSpacePoint.y,
-								(float)scaledSpacePoint.z
-							)
-						);
-						GUI.Label(new Rect(screenPos.x - 8, Screen.height - screenPos.y - 8, 16, 16), "x");//i.ToString ());
-//						var screenRect = new Rect((screenPos.x - 5), (Screen.height - screenPos.y) - 5, 10, 10);
-//						GUI.DrawTexture(screenRect, BonVoyage.Instance.mapMarker);
-					}
+					GLUtils.DrawCurve (wayPoints);
 				}
 			}
 
@@ -412,7 +431,6 @@ namespace BonVoyage
 				ModuleDeployableSolarPanel solarPanel = part.FindModuleImplementing<ModuleDeployableSolarPanel>();
 				if (solarPanel == null)
 					continue;
-//				if (solarPanel.panelState != ModuleDeployableSolarPanel.panelStates.BROKEN)
 				if (solarPanel.deployState != ModuleDeployableSolarPanel.DeployState.BROKEN)
 				{
 					if (solarPanel.useCurve)
@@ -433,23 +451,64 @@ namespace BonVoyage
 			double otherPower = 0;
 			foreach (var part in this.vessel.parts)
 			{
+				// Find standard RTGs
 				ModuleGenerator powerModule = part.FindModuleImplementing<ModuleGenerator>();
-				if (powerModule == null)
-					continue;
-				if (powerModule.generatorIsActive || powerModule.isAlwaysActive)
-				{
-//					foreach (var resource in powerModule.outputList)
-					foreach (var resource in powerModule.resHandler.outputResources)
-					{
-						if (resource.name == "ElectricCharge")
-						{
-							otherPower += resource.rate * powerModule.efficiency;
+				if (powerModule != null) {
+					if (powerModule.generatorIsActive || powerModule.isAlwaysActive) {
+						foreach (var resource in powerModule.resHandler.outputResources) {
+							if (resource.name == "ElectricCharge") {
+								otherPower += resource.rate * powerModule.efficiency;
+							}
+						}
+					}
+				}
+
+				// Search for other generators
+				PartModuleList modules = part.Modules;
+
+				// Near future fission reactors
+				foreach (var module in modules) {
+					if (module.moduleName == "FissionGenerator") {
+						otherPower += double.Parse (module.Fields.GetValue ("CurrentGeneration").ToString());
+					}
+				}
+
+				// USI reactors
+				ModuleResourceConverter converterModule = part.FindModuleImplementing<ModuleResourceConverter>();
+				if (converterModule != null) {
+					if (converterModule.ModuleIsActive() && converterModule.ConverterName == "Reactor") {
+						foreach (var resource in converterModule.outputList) {
+							if (resource.ResourceName == "ElectricCharge") {
+								otherPower += resource.Ratio * converterModule.Efficiency;
+							}
 						}
 					}
 				}
 			}
 			return otherPower;
 		} // So many ifs.....
+
+		/// <summary>
+		/// Decodes the path.
+		/// </summary>
+//		private void DecodePath() {
+//			dots.Clear ();
+//			if (pathEncoded == null || pathEncoded.Length == 0)
+//				return;
+//
+//			char[] separators = new char[] { ';' };
+//			string[] wps = pathEncoded.Split (separators, StringSplitOptions.RemoveEmptyEntries);
+//			foreach (var wp in wps) {
+//				string[] latlon = wp.Split (':');
+//				Vector3d localSpacePoint =
+//					this.vessel.mainBody.GetWorldSurfacePosition (
+//						double.Parse(latlon[0]),
+//						double.Parse(latlon[1]),
+//						0
+//					);
+//				dots.Add (localSpacePoint);
+//			}
+//		}
 
 		// Cinically stolen from Waypoint Manager source code :D
 		private void PlaceTargetAtCursor()
@@ -480,10 +539,6 @@ namespace BonVoyage
 					{
 						targetLatitude = (targetBody.GetLatitude(surfacePoint) + 360) % 360;
 						targetLongitude = (targetBody.GetLongitude(surfacePoint) + 360) % 360;
-/*						this.distanceToTarget = GeoUtils.GetDistance(
-							this.vessel.latitude, this.vessel.longitude, this.targetLatitude, this.targetLongitude, this.vessel.mainBody.Radius
-						);
-						this.distanceTravelled = 0;*/
 						return;
 					}
 					else

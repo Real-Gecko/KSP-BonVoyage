@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace BonVoyage
 {
-	public class Hex : IHasNeighbours<Hex> {
+	internal class Hex : IHasNeighbours<Hex> {
 		private double latitude;
 		public double Latitude { get { return latitude; } }
 

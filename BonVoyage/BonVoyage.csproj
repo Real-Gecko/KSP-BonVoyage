@@ -27,10 +27,9 @@
     <ConsolePause>false</ConsolePause>
     <CustomCommands>
       <CustomCommands>
-        <Command>
-          <type>AfterBuild</type>
-          <command>${ProjectDir}\copy.bat</command>
-        </Command>
+        <Command type="AfterBuild" command="cp ${TargetFile} /home/realgecko/Development/KSP/GameData/${ProjectName}" />
+        <Command type="AfterBuild" command="cp ${TargetFile} ${SolutionDir}/GameData/${ProjectName}" />
+        <Command type="Execute" command="/usr/bin/wine /home/realgecko/Development/KSP/KSP_x64.exe" workingdir="/home/realgecko/Development/KSP/" />
       </CustomCommands>
     </CustomCommands>
   </PropertyGroup>
@@ -38,9 +37,6 @@
     <Reference Include="System" />
     <Reference Include="Assembly-CSharp">
       <HintPath>..\..\KSP\KSP_Data\Managed\Assembly-CSharp.dll</HintPath>
-    </Reference>
-    <Reference Include="Assembly-CSharp-firstpass">
-      <HintPath>..\..\KSP\KSP_Data\Managed\Assembly-CSharp-firstpass.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine">
       <HintPath>..\..\KSP\KSP_Data\Managed\UnityEngine.dll</HintPath>
@@ -52,16 +48,19 @@
   <ItemGroup>
     <Compile Include="BonVoyage.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="GeoUtils.cs" />
     <Compile Include="BonVoyageModule.cs" />
     <Compile Include="ActiveRover.cs" />
-    <Compile Include="PathFinder\GridController.cs" />
     <Compile Include="PathFinder\Hex.cs" />
     <Compile Include="PathFinder\Path.cs" />
     <Compile Include="PathFinder\PathFinder.cs" />
+    <Compile Include="Utilities\GeoUtils.cs" />
+    <Compile Include="Utilities\ToolbarWrapper.cs" />
+    <Compile Include="Utilities\GLUtils.cs" />
+    <Compile Include="PathFinder\PathUtils.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
     <Folder Include="PathFinder\" />
+    <Folder Include="Utilities\" />
   </ItemGroup>
 </Project>

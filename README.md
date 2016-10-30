@@ -2,6 +2,31 @@
 Rovers background processing for KSP.
 
 # Changelog
+## 0.11.0
+- New part, created by [Enceos](http://forum.kerbalspaceprogram.com/index.php?/profile/110725-enceos/)
+- Icon is now colorized, made by [Madebyoliver](http://www.flaticon.com/authors/madebyoliver) and licensed under [Creative Commons BY 3.0](http://creativecommons.org/licenses/by/3.0/)
+- Moved BV part to Space Exploration science node, where RoveMax Model S2 is
+- Parts that can contain BV module are not hardcoded anymore
+- Duplicate parts on the same vessel are ignored
+- Code cleanup
+- KSP skin for UI available
+- Dewarp done in two steps: instant to 50x and then gradual to 1x
+- Solar powered rovers will idle when Sun is 0 degrees above the horizon, no more stucking at poles
+- Serious average speed penalties at twighlight and at night time for manned rovers
+- Some colors in arrival report
+- Added toolbar support, fixed wrapper, no Contract Configurator conflict :D
+- Switching to vessel with interface button will go without scene reload if vessel is already loaded
+- 80% speed penalty for unmanned rovers
+- UI and label are hidden if game is paused
+- Label is hidden when all hidden (F2)
+- Fixed crazy torpedoes nuking active vessel, rover simply won't move closer than 2400 meters to active vessel
+- Fixed argument out of range caused sometimes and rover voyage end
+- Route visualized with red line
+- Route always visualized for active rover if exists
+- Target can be set to active navigation point
+- Added support for USI nuclear reactors
+- Added support for NFE fission reactors
+
 ## 0.10.2
 - Recompile for KSP 1.2
 - Fixed last waypoint being last step of voyage
