@@ -8,3 +8,5 @@
 - something is wrong with landedAt field on vessel launch
 - check for closest star
 - show route only for active rover
+- background for target picker information
+- target 200 meters away from navpoint

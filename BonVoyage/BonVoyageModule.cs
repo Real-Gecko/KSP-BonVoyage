@@ -479,7 +479,7 @@ namespace BonVoyage
 					if (converterModule.ModuleIsActive() && converterModule.ConverterName == "Reactor") {
 						foreach (var resource in converterModule.outputList) {
 							if (resource.ResourceName == "ElectricCharge") {
-								otherPower += resource.Ratio * converterModule.Efficiency;
+								otherPower += resource.Ratio * converterModule.GetEfficiencyMultiplier();
 							}
 						}
 					}

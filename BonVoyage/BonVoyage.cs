@@ -229,7 +229,7 @@ namespace BonVoyage
 		/// Deal with launcher button.
 		/// </summary>
 		private void CreateLauncher() {
-			if (ToolbarManager.ToolbarAvailable && useToolbar) {
+			if (ToolbarManager.ToolbarAvailable && useToolbar && !HighLogic.LoadedSceneIsEditor) {
 				toolbarButton = ToolbarManager.Instance.add ("BonVoyage", "AppLaunch");
 				toolbarButton.TexturePath = "BonVoyage/Textures/bon-voyage-icon-toolbar";
 				toolbarButton.ToolTip = "Bon Voyage Controller";
@@ -408,11 +408,16 @@ namespace BonVoyage
 			GUI.contentColor = Color.white;
 			autoDewarp = GUILayout.Toggle(autoDewarp, "Automagic Dewarp");
 			useKSPSkin = GUILayout.Toggle (useKSPSkin, "Use KSP Skin");
+			GUILayout.BeginHorizontal ();
+			if (GUILayout.Button ("Close", GUILayout.Height(25))) {
+				onToggle ();
+			}
 			if (GUILayout.Button("Switch Toolbar", GUILayout.Height(25), GUILayout.Width(150))) {
 				useToolbar = !useToolbar;
 				DestroyLauncher ();
 				CreateLauncher ();
 			}
+			GUILayout.EndHorizontal ();
 			GUILayout.EndVertical();
 			GUI.DragWindow();
 		}
