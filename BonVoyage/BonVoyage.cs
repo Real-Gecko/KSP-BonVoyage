@@ -220,9 +220,9 @@ namespace BonVoyage
 			lastUpdated = DateTime.Now;
 
 			double currentTime = Planetarium.GetUniversalTime();
-
-			foreach (ActiveRover rover in activeRovers)
-				rover.Update (currentTime);
+			
+			for(int i=0; i<activeRovers.Count;++i)
+				activeRovers[i].Update (currentTime);
 		}
 
 		/// <summary>
@@ -329,8 +329,9 @@ namespace BonVoyage
 			double currentTime = Planetarium.GetUniversalTime();
 			GUILayout.BeginVertical();
 			mainWindowScrollPosition = GUILayout.BeginScrollView(mainWindowScrollPosition);
-			foreach (var rover in activeRovers)
+			for(int i=0; i<activeRovers.Count;++i)
 			{
+				var rover = activeRovers[i];
 				switch (rover.status)
 				{
 					case "current":
@@ -423,8 +424,9 @@ namespace BonVoyage
 		}
 
 		public void UpdateRoverState(Vessel vessel, bool stateActive) {
-			foreach (var rover in activeRovers)
+			for(int i=0; i<activeRovers.Count;++i)
 			{
+				var rover = activeRovers[i];
 				if (rover.vessel == vessel)
 				{
 					rover.bvActive = stateActive;

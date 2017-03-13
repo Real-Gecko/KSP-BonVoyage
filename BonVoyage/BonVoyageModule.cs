@@ -126,8 +126,9 @@ namespace BonVoyage
 			int inTheAir = 0;
 
 			List<ModuleWheels.ModuleWheelMotor> operableWheels = new List<ModuleWheels.ModuleWheelMotor>();
-			foreach (var part in this.vessel.parts)
+			for(int i=0;i<this.vessel.parts.Count;++i)
 			{
+			    var part = this.vessel.parts[i];
 				ModuleWheels.ModuleWheelMotor wheelMotor = part.FindModuleImplementing<ModuleWheels.ModuleWheelMotor>();
 				if (wheelMotor != null)
 				{
@@ -293,9 +294,9 @@ namespace BonVoyage
 		[KSPEvent(guiActive = true, guiName = "Calculate average speed", active = false)]
 		public void CalculateAverageSpeed() {
 			List<ModuleWheels.ModuleWheelMotor> operableWheels = new List<ModuleWheels.ModuleWheelMotor>();
-			foreach (var part in this.vessel.parts)
+			for(int i=0; i< this.vessel.parts.Count;++i)
 			{
-				ModuleWheels.ModuleWheelMotor wheelMotor = part.FindModuleImplementing<ModuleWheels.ModuleWheelMotor>();
+				ModuleWheels.ModuleWheelMotor wheelMotor = this.vessel.parts[i].FindModuleImplementing<ModuleWheels.ModuleWheelMotor>();
 				if (wheelMotor != null)
 				{
 					operableWheels.Add(wheelMotor);
@@ -311,9 +312,9 @@ namespace BonVoyage
 		{
 			double powerRequired = 0;
 //			List<ModuleWheels.ModuleWheelMotor> operableWheels = new List<ModuleWheels.ModuleWheelMotor>();
-			foreach (var part in this.vessel.parts)
+			for(int i=0; i< this.vessel.parts.Count;++i)
 			{
-				ModuleWheels.ModuleWheelMotor wheelMotor = part.FindModuleImplementing<ModuleWheels.ModuleWheelMotor>();
+				ModuleWheels.ModuleWheelMotor wheelMotor = this.vessel.parts[i].FindModuleImplementing<ModuleWheels.ModuleWheelMotor>();
 				if (wheelMotor != null)
 				{
 					if (wheelMotor.motorEnabled)
@@ -399,8 +400,9 @@ namespace BonVoyage
 		{
 			double averageSpeed = 0;
 			int wheelsOnline = 0;
-			foreach (ModuleWheels.ModuleWheelMotor wheelMotor in operableWheels)
+			for(int i=0;i<operableWheels.Count;++i)
 			{
+			    var wheelMotor = operableWheels[i];
 				if (wheelMotor.motorEnabled)
 				{
 					wheelsOnline++;
@@ -426,9 +428,9 @@ namespace BonVoyage
 			double solarFlux = PhysicsGlobals.SolarLuminosity / (12.566370614359172 * distanceToSun * distanceToSun);
 			float multiplier = 1;
 
-			foreach (var part in this.vessel.parts)
+			for(int i=0;i<this.vessel.parts.Count;++i)
 			{
-				ModuleDeployableSolarPanel solarPanel = part.FindModuleImplementing<ModuleDeployableSolarPanel>();
+				ModuleDeployableSolarPanel solarPanel = this.vessel.parts[i].FindModuleImplementing<ModuleDeployableSolarPanel>();
 				if (solarPanel == null)
 					continue;
 				if (solarPanel.deployState != ModuleDeployableSolarPanel.DeployState.BROKEN)
@@ -449,13 +451,16 @@ namespace BonVoyage
 		private double CalculateOtherPower()
 		{
 			double otherPower = 0;
-			foreach (var part in this.vessel.parts)
+			for(int i=0;i<this.vessel.parts.Count;++i)
 			{
+			    var part = this.vessel.parts[i];
 				// Find standard RTGs
 				ModuleGenerator powerModule = part.FindModuleImplementing<ModuleGenerator>();
 				if (powerModule != null) {
 					if (powerModule.generatorIsActive || powerModule.isAlwaysActive) {
-						foreach (var resource in powerModule.resHandler.outputResources) {
+					    for(int j=0; j<powerModule.resHandler.outputResources.Count;++j)
+						{
+						    var resource = powerModule.resHandler.outputResources[j];
 							if (resource.name == "ElectricCharge") {
 								otherPower += resource.rate * powerModule.efficiency;
 							}
@@ -467,7 +472,9 @@ namespace BonVoyage
 				PartModuleList modules = part.Modules;
 
 				// Near future fission reactors
-				foreach (var module in modules) {
+				for(int j=0;j<modules.Count;++j)
+				{
+				    var module = modules[j];
 					if (module.moduleName == "FissionGenerator") {
 						otherPower += double.Parse (module.Fields.GetValue ("CurrentGeneration").ToString());
 					}
@@ -477,7 +484,9 @@ namespace BonVoyage
 				ModuleResourceConverter converterModule = part.FindModuleImplementing<ModuleResourceConverter>();
 				if (converterModule != null) {
 					if (converterModule.ModuleIsActive() && converterModule.ConverterName == "Reactor") {
-						foreach (var resource in converterModule.outputList) {
+						for(int j=0;j<converterModule.outputList.Count;++j)
+						{
+						    var resource = converterModule.outputList[j];
 							if (resource.ResourceName == "ElectricCharge") {
 								otherPower += resource.Ratio * converterModule.GetEfficiencyMultiplier();
 							}
