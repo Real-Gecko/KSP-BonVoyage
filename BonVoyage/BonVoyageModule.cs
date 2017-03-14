@@ -124,14 +124,26 @@ namespace BonVoyage
 			this.averageSpeed = 0;
 			double powerRequired = 0;
 			int inTheAir = 0;
+			int onTheGround = 0;
 
 			List<ModuleWheels.ModuleWheelMotor> operableWheels = new List<ModuleWheels.ModuleWheelMotor>();
 			for(int i=0;i<this.vessel.parts.Count;++i)
 			{
 			    var part = this.vessel.parts[i];
-				ModuleWheels.ModuleWheelMotor wheelMotor = part.FindModuleImplementing<ModuleWheels.ModuleWheelMotor>();
-				if (wheelMotor != null)
+				ModuleWheelBase wheelBase = part.FindModuleImplementing<ModuleWheelBase>();
+				if (wheelBase != null && wheelBase.wheelType != WheelType.LEG)
 				{
+
+					if (wheelBase.isGrounded)
+					{
+						onTheGround++;
+					}
+					else
+					{
+						inTheAir++;
+						continue;
+					}
+
 					ModuleWheels.ModuleWheelDamage wheelDamage = part.FindModuleImplementing<ModuleWheels.ModuleWheelDamage>();
 					if (wheelDamage != null)
 					{ // Malemute and Karibou wheels do not implement moduleDamage, thus making this mod cheaty
@@ -140,18 +152,20 @@ namespace BonVoyage
 							ScreenMessages.PostScreenMessage("Some wheels are broken, we're stuck!");
 							return;
 						}
-						if (wheelDamage.currentDownForce == 0)
-						{
-							inTheAir++;
-							continue;
-						}
 					}
-					if (wheelMotor.motorEnabled)
+
+					ModuleWheels.ModuleWheelMotor wheelMotor = part.FindModuleImplementing<ModuleWheels.ModuleWheelMotor>();
+					if (wheelMotor != null)
 					{
-						//						powerRequired += wheelMotor.inputResource.rate;
-						powerRequired += wheelMotor.avgResRate;
+						if (wheelMotor.motorEnabled)
+						{
+							//						powerRequired += wheelMotor.inputResource.rate;
+							powerRequired += wheelMotor.avgResRate;
+						}
+						operableWheels.Add(wheelMotor);
+
 					}
-					operableWheels.Add(wheelMotor);
+
 				}
 			}
 
@@ -165,15 +179,15 @@ namespace BonVoyage
 				return;
 			}
 
-			// No driving until 4 operable wheels are touching the ground
-			if (inTheAir > 0 && operableWheels.Count < 4)
+			// No driving until 4 wheels are touching the ground
+			if (inTheAir > 0 && operableWheels.Count < 4 && onTheGround < 4)
 			{
 				ScreenMessages.PostScreenMessage("Wheels are not touching the ground, are you serious???");
 				return;
 			}
 
 			// What???
-			if (operableWheels.Count < 4)
+			if (operableWheels.Count < 4 && onTheGround < 4)
 			{
 				ScreenMessages.PostScreenMessage("Monocycles, bicycles and trycicles are not supported, bye!");
 				return;
