@@ -59,13 +59,8 @@ namespace BonVoyage
 					var newPath = path.AddStep(n, d);
 					queue.Enqueue(newPath.TotalCost + estimate(n), newPath);
 				}
-				// If pathfinding takes too much time then cancel
-				if (startedAt.AddSeconds (10) < DateTime.Now) {
-					ScreenMessages.PostScreenMessage ("Ten seconds passed", 5);
-					ScreenMessages.PostScreenMessage ("Route calculation stopped", 6);
-					ScreenMessages.PostScreenMessage ("Try some closer location", 7);
+				if (startedAt.AddSeconds (10) < DateTime.Now)
 					return null;
-				}
 			}
 			return null;
 		}
@@ -99,7 +94,7 @@ namespace BonVoyage
 		}
 	}
 
-	interface IHasNeighbours<N> 
+	interface IHasNeighbours<N>
 	{
 		IEnumerable<N> Neighbours { get; }
 	}
