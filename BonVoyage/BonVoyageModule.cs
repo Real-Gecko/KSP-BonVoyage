@@ -131,7 +131,7 @@ namespace BonVoyage
 			{
 			    var part = this.vessel.parts[i];
 				ModuleWheelBase wheelBase = part.FindModuleImplementing<ModuleWheelBase>();
-				if (wheelBase != null)
+				if (wheelBase != null && wheelBase.wheelType != WheelType.LEG)
 				{
 
 					if (wheelBase.isGrounded)
