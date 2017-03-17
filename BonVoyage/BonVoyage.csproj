@@ -57,10 +57,17 @@
     <Compile Include="Utilities\ToolbarWrapper.cs" />
     <Compile Include="Utilities\GLUtils.cs" />
     <Compile Include="PathFinder\PathUtils.cs" />
+    <Compile Include="UIFramework\Core.cs" />
+    <Compile Include="UIFramework\Layout.cs" />
+    <Compile Include="UIFramework\Offsets.cs" />
+    <Compile Include="UIFramework\Palette.cs" />
+    <Compile Include="UIFramework\Styles.cs" />
+    <Compile Include="Utilities\LZString.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
     <Folder Include="PathFinder\" />
     <Folder Include="Utilities\" />
+    <Folder Include="UIFramework\" />
   </ItemGroup>
 </Project>

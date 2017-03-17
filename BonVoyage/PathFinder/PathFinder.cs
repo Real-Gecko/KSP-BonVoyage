@@ -11,6 +11,7 @@ namespace BonVoyage
 	// https://tbswithunity3d.wordpress.com/2012/02/23/hexagonal-grid-path-finding-using-a-algorithm/
 	public class PathFinder
 	{
+		internal const double StepSize = 1000;
 		public struct Point
 		{
 			public int X, Y;
@@ -67,7 +68,7 @@ namespace BonVoyage
 
 		public void FindPath() {
 			double distanceToTarget = GeoUtils.GetDistance (startLatitude, startLongitude, targetLatitude, targetLongitude, mainBody.Radius);
-			if (distanceToTarget < 1000) return;
+			if (distanceToTarget < StepSize) return;
 			double bearing = GeoUtils.InitialBearing (startLatitude, startLongitude, targetLatitude, targetLongitude);
 			double altitude = GeoUtils.TerrainHeightAt (startLatitude, startLongitude, mainBody);
 			int x = 0;
@@ -83,7 +84,7 @@ namespace BonVoyage
 				GetNeighbours(x, y, false);
 				x += directions [0].X;
 				y += directions [0].Y;
-				straightPath += 1000;
+				straightPath += StepSize;
 			}
 			Hex destination = tiles.Find (t => (t.X == x + directions [180].X) && (t.Y == y + directions [180].Y));
 
@@ -102,7 +103,7 @@ namespace BonVoyage
 			return GeoUtils.GetDistance (hex.Latitude, hex.Longitude, targetLatitude, targetLongitude, mainBody.Radius);
 		}
 
-		Func<Hex, Hex, double> distance = (node1, node2) => 1000;
+		Func<Hex, Hex, double> distance = (node1, node2) => StepSize;
 		Func<Hex, double> estimate;
 
 		internal IEnumerable<Hex> GetNeighbours(int x, int y, bool passable = true) {
@@ -119,7 +120,7 @@ namespace BonVoyage
 				var neighbour = tiles.Find(n => (n.X == tile.X + dirX) && (n.Y == tile.Y + dirY));
 				if (neighbour == null) {
 					//					Debug.Log ("bonvoyage - neighbour not found");
-					double[] coords = GeoUtils.GetLatitudeLongitude (tile.Latitude, tile.Longitude, tile.Bearing + direction.Key, 1000, mainBody.Radius);
+					double[] coords = GeoUtils.GetLatitudeLongitude (tile.Latitude, tile.Longitude, tile.Bearing + direction.Key, StepSize, mainBody.Radius);
 					double newBearing = GeoUtils.FinalBearing (tile.Latitude, tile.Longitude, coords [0], coords [1]);
 					newBearing = (newBearing - direction.Key + 360) % 360;
 					double altitude = GeoUtils.TerrainHeightAt (coords [0], coords [1], mainBody);
@@ -129,7 +130,11 @@ namespace BonVoyage
 				tiles.Add (neighbour);
 			}
 			if (passable) {
-				return neighbours.Where (n => (n.Altitude >= 0) && ((n.Altitude - tile.Altitude) < 500) && ((n.Altitude - tile.Altitude) > -500));
+				return neighbours.Where (
+					n => (n.Altitude >= 0 || !mainBody.ocean) &&
+					((n.Altitude - tile.Altitude) < StepSize / 2) &&
+					((n.Altitude - tile.Altitude) > 0 - StepSize / 2)
+				);
 			}
 			else
 				return neighbours;

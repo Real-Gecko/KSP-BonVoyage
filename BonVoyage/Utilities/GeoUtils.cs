@@ -114,6 +114,25 @@ namespace BonVoyage
 			};
 		}
 
+		/// <summary>
+		/// Step back from target by 'step' meters
+		/// </summary>
+		/// <returns>The back.</returns>
+		/// <param name="startLatitude">Start latitude.</param>
+		/// <param name="startLongitude">Start longitude.</param>
+		/// <param name="endLatitude">End latitude.</param>
+		/// <param name="endLongitude">End longitude.</param>
+		/// <param name="radius">Radius.</param>
+		/// <param name="step">Step.</param>
+		internal static double[] StepBack(double startLatitude, double startLongitude, double endLatitude, double endLongitude, double radius, double step) {
+			double distanceToTarget = GetDistance (startLatitude, startLongitude, endLatitude, endLongitude, radius);
+			if (distanceToTarget <= step)
+				return null;
+			distanceToTarget -= step;
+			double bearing = InitialBearing(startLatitude, startLongitude, endLatitude, endLongitude);
+			return GetLatitudeLongitude(startLatitude, startLongitude, bearing, distanceToTarget, radius);
+		}
+
 		internal static double[] GetLatitudeLongitudeRad(double latStart, double lonStart, double bearing, double distance, double radius)
 		{
 			var latEnd = Math.Asin(Math.Sin(latStart) * Math.Cos(distance / radius) +

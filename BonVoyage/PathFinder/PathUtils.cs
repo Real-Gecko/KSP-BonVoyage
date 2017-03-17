@@ -24,7 +24,7 @@ namespace BonVoyage
 			foreach (Hex point in path) {
 				result += point.Latitude.ToString("R") + ":" + point.Longitude.ToString("R") +";";
 			}
-			return result;
+			return LZString.compressToBase64 (result);
 		}
 
 		/// <summary>
@@ -38,6 +38,11 @@ namespace BonVoyage
 
 			if (pathEncoded == null || pathEncoded.Length == 0)
 				return result;
+
+			// Path is compressed, decompress
+			// For compatibility purposes only
+			if (!pathEncoded.Contains (";"))
+				pathEncoded = LZString.decompressFromBase64 (pathEncoded);
 
 			char[] separators = new char[] { ';' };
 			string[] wps = pathEncoded.Split (separators, StringSplitOptions.RemoveEmptyEntries);
@@ -60,8 +65,13 @@ namespace BonVoyage
 		/// <returns>The path.</returns>
 		/// <param name="pathEncoded">Path encoded.</param>
 		internal static List<WayPoint> DecodePath(string pathEncoded) {
-			if (pathEncoded == null)
+			if (pathEncoded == null || pathEncoded.Length == 0)
 				return null;
+
+			// Path is compressed, decompress
+			// For compatibility purposes only
+			if (!pathEncoded.Contains (";"))
+				pathEncoded = LZString.decompressFromBase64 (pathEncoded);
 
 			List<WayPoint> result = new List<WayPoint> ();
 			char[] separators = new char[] { ';' };

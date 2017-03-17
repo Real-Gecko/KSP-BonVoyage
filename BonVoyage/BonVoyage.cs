@@ -16,13 +16,14 @@ namespace BonVoyage
 	public class BonVoyage : MonoBehaviour
 	{
 		public static BonVoyage Instance;
-//		public Texture2D mapMarker;
 
 		private List<ActiveRover> activeRovers;
 		private ApplicationLauncherButton appLauncherButton;
 		private IButton toolbarButton;
 		private DateTime lastUpdated;
 		private bool gamePaused;
+		private BonVoyageModule currentModule;
+		private List<Vector3d> wayPoints;
 
 		// Config stuff
 		private PluginConfiguration config;
@@ -50,10 +51,13 @@ namespace BonVoyage
 		//GUI variables
 		private bool useToolbar;
 		private bool guiVisible;
+		private bool rcVisible;
 		private bool globalHidden;
 		private Rect guiRect;
 		private int guiId;
 		Vector2 mainWindowScrollPosition;
+		private Rect rcRect;
+		private int rcGuiId;
 
 		/// <summary>
 		/// Instead of constructor.
@@ -69,21 +73,28 @@ namespace BonVoyage
 
 			toolbarButton = null;
 			guiVisible = false;
+			rcVisible = false;
 			globalHidden = false;
 			gamePaused = false;
 
 			guiId = GUIUtility.GetControlID(FocusType.Passive);
+			rcGuiId = GUIUtility.GetControlID (FocusType.Passive);
 			config = PluginConfiguration.CreateForType<BonVoyage>();
 			config.load();
 			autoDewarp = config.GetValue<bool>("autoDewarp", false);
 
 			activeRovers = new List<ActiveRover>();
+			wayPoints = new List<Vector3d> ();
 
 			Rect sample = new Rect();
 			sample.width = 700;
 			sample.height = 500;
 			sample.center = new Vector2(Screen.width / 2, Screen.height / 2);
 			guiRect = config.GetValue<Rect>("guiRect", new Rect(sample));
+			sample.width = 400;
+			sample.height = 500;
+			sample.center = new Vector2(Screen.width / 2, Screen.height / 2);
+			rcRect = config.GetValue<Rect> ("rcRect", new Rect(sample));
 			useKSPSkin = config.GetValue<bool> ("useKSPSkin", false);
 			useToolbar = config.GetValue<bool> ("useToolbar", false);
 			config.save();
@@ -137,6 +148,7 @@ namespace BonVoyage
 
 			config.SetValue("autoDewarp", autoDewarp);
 			config.SetValue("guiRect", guiRect);
+			config.SetValue ("rcRect", rcRect);
 			config.SetValue ("useKSPSkin", useKSPSkin);
 			config.SetValue ("useToolbar", useToolbar);
 			config.save();
@@ -152,7 +164,7 @@ namespace BonVoyage
 		}
 
 		/// <summary>
-		/// Hide UI on scene switch.
+		/// Hide UI and remove input lock on scene switch
 		/// </summary>
 		/// <param name="ev">Ev.</param>
 		public void onGameSceneSwitchRequested(GameEvents.FromToAction<GameScenes, GameScenes> ev)
@@ -160,6 +172,8 @@ namespace BonVoyage
 			if (appLauncherButton != null)
 				appLauncherButton.SetFalse();
 			guiVisible = false;
+			rcVisible = false;
+			InputLockManager.RemoveControlLock("BonVoyageInputLock");
 		}
 
 		/// <summary>
@@ -168,14 +182,35 @@ namespace BonVoyage
 		/// <param name="vessel">Vessel.</param>
 		public void onVesselChange(Vessel vessel)
 		{
-			foreach (var rover in activeRovers)
-			{
-				if (rover.vessel == vessel && rover.bvActive)
-				{
-					InputLockManager.SetControlLock(lockMask, "BonVoyageInputLock");
+			if (!HighLogic.LoadedSceneIsFlight)
+				return;
+			
+			currentModule = vessel.FindPartModuleImplementing<BonVoyageModule> ();
+//			if (wayPoints != null)
+//				wayPoints.Clear ();
+			if (currentModule != null) {
+				currentModule.SystemCheck ();
+				UpdateWayPoints ();
+//				wayPoints = PathUtils.DecodePath (currentModule.pathEncoded, currentModule.vessel.mainBody);
+				if (currentModule.isActive) {
+					InputLockManager.SetControlLock (lockMask, "BonVoyageInputLock");
 					return;
 				}
 			}
+
+//			currentModule = null;
+//			foreach (var rover in activeRovers)
+//			{
+//				if (rover.vessel == vessel)
+////					ControlThis (rover.vessel.FindPartModuleImplementing<BonVoyageModule> (), false);
+//					currentModule = rover.vessel.FindPartModuleImplementing<BonVoyageModule>();
+//				
+//				if (rover.vessel == vessel && rover.bvActive)
+//				{
+//					InputLockManager.SetControlLock(lockMask, "BonVoyageInputLock");
+//					return;
+//				}
+//			}
 			InputLockManager.RemoveControlLock("BonVoyageInputLock");
 		}
 
@@ -221,8 +256,8 @@ namespace BonVoyage
 
 			double currentTime = Planetarium.GetUniversalTime();
 			
-			for(int i=0; i<activeRovers.Count;++i)
-				activeRovers[i].Update (currentTime);
+			for (int i = 0; i < activeRovers.Count; i++)
+				activeRovers [i].Update (currentTime);
 		}
 
 		/// <summary>
@@ -286,6 +321,9 @@ namespace BonVoyage
 		{
 			if (gamePaused || globalHidden) return;
 
+			if (MapView.MapIsEnabled && HighLogic.LoadedSceneIsFlight && wayPoints.Count > 0)
+				GLUtils.DrawCurve (wayPoints);
+
 			if (InputLockManager.GetControlLock("BonVoyageInputLock") != 0)
 			{
 				GUILayout.BeginArea(labelRect);
@@ -293,21 +331,30 @@ namespace BonVoyage
 				GUILayout.EndArea();
 			}
 
-			if (!guiVisible) return;
+			if (!guiVisible && !rcVisible) return;
 
 			if (useKSPSkin)
 				GUI.skin = HighLogic.Skin;
 			else
 				GUI.skin = UnityEngine.GUI.skin;
 
-			guiRect = GUILayout.Window(
-				guiId,
-				guiRect,
-				DrawGUI,
-				"Bon Voyage powered rovers",
-				GUILayout.ExpandWidth(true),
-				GUILayout.ExpandHeight(true)
-			);
+			if (guiVisible) {
+				guiRect = Layout.Window (
+					guiId,
+					guiRect,
+					DrawGUI,
+					"Bon Voyage powered rovers"
+				);
+			}
+
+			if (rcVisible) {
+				rcRect = Layout.Window (
+					rcGuiId,
+					rcRect,
+					DrawRcGUI,
+					"Bon Voyage control"
+				);
+			}
 		}
 
 		public void onAppTrue()
@@ -324,48 +371,43 @@ namespace BonVoyage
 			guiVisible = !guiVisible;
 		}
 
+
+		/// <summary>
+		/// Draws main UI
+		/// </summary>
+		/// <param name="guiId">GUI identifier.</param>
 		public void DrawGUI(int guiId)
 		{
 			double currentTime = Planetarium.GetUniversalTime();
 			GUILayout.BeginVertical();
 			mainWindowScrollPosition = GUILayout.BeginScrollView(mainWindowScrollPosition);
-			for(int i=0; i<activeRovers.Count;++i)
-			{
-				var rover = activeRovers[i];
-				switch (rover.status)
-				{
-					case "current":
-						GUI.contentColor = Color.white;
-						break;
-					case "roving":
-						GUI.contentColor = Color.green;
-						break;
-					case "idle":
-						GUI.contentColor = Color.yellow;
-						break;
-					case "awaiting sunlight":
-						GUI.contentColor = Color.red;
-						break;
+			for (int i = 0; i < activeRovers.Count; i++) {
+				var rover = activeRovers [i];
+				switch (rover.status) {
+				case "current":
+					GUI.contentColor = Color.white;
+					break;
+				case "roving":
+					GUI.contentColor = Palette.green;
+					break;
+				case "idle":
+					GUI.contentColor = Palette.yellow;
+					break;
+				case "awaiting sunlight":
+					GUI.contentColor = Palette.red;
+					break;
 				}
-				GUILayout.BeginHorizontal();
-				if (GUILayout.Button(
-						rover.vessel.vesselName,
-						GUILayout.Height(25),
-						GUILayout.Width(150)
-				   ))
-				{
-					if (HighLogic.LoadedScene == GameScenes.TRACKSTATION)
-					{
-						PlanetariumCamera.fetch.SetTarget(rover.vessel.mapObject);
+				GUILayout.BeginHorizontal ();
+				if (Layout.Button (rover.vessel.vesselName, GUILayout.Width(200))) {
+					if (HighLogic.LoadedScene == GameScenes.TRACKSTATION) {
+						PlanetariumCamera.fetch.SetTarget (rover.vessel.mapObject);
 					}
-					if (HighLogic.LoadedSceneIsFlight)
-					{
-						MapView.EnterMapView();
-						PlanetariumCamera.fetch.SetTarget(rover.vessel.mapObject);
+					if (HighLogic.LoadedSceneIsFlight) {
+						MapView.EnterMapView ();
+						PlanetariumCamera.fetch.SetTarget (rover.vessel.mapObject);
 					}
 				}
-				if (GUILayout.Button("Switch to", GUILayout.Height(25), GUILayout.Width(100)))
-				{
+				if (Layout.Button ("Switch to", GUILayout.Width(100))) {
 					if (rover.vessel.loaded)
 						FlightGlobals.SetActiveVessel (rover.vessel);
 					else {
@@ -374,66 +416,154 @@ namespace BonVoyage
 					}
 				}
 
-				GUILayout.Label(
-					rover.vessel.mainBody.bodyName,
-					GUILayout.Width(45)
-				);
-				GUILayout.Label(
-					rover.status,
-					GUILayout.Width(105)
-				);
-				if (rover.status == "roving" || rover.status == "awaiting sunlight")
-				{
-					GUILayout.Label(
-						"v̅ = " + rover.AverageSpeed.ToString("N") + ", yet to travel " +
-						rover.yetToTravel.ToString("N0") + " meters"
+//				Layout.LabelAndText (rover.vessel.mainBody.theName, rover.status);
+				Layout.Label (rover.vessel.mainBody.bodyName, GUILayout.Width(75));
+				Layout.Label (rover.status, GUILayout.Width (125));
+
+				if (rover.status == "roving" || rover.status == "awaiting sunlight") {
+					Layout.Label (
+						"v̅ = " + rover.AverageSpeed.ToString ("N") + ", yet to travel " +
+						rover.yetToTravel.ToString ("N0") + " meters"
 					);
 				}
 
-				if (rover.status == "idle")
-				{
-					TimeSpan t = TimeSpan.FromSeconds(currentTime - rover.LastTime);
+				if (rover.status == "idle") {
+					TimeSpan t = TimeSpan.FromSeconds (currentTime - rover.LastTime);
 
-					string idlePeriod = string.Format(
-						"{0:D2}h:{1:D2}m:{2:D2}s",
-						t.Hours,
-						t.Minutes,
-						t.Seconds
-					);
+					string idlePeriod = string.Format (
+						                    "{0:D2}h:{1:D2}m:{2:D2}s",
+						                    t.Hours,
+						                    t.Minutes,
+						                    t.Seconds
+					                    );
 
-					GUILayout.Label(idlePeriod);
+					Layout.Label (idlePeriod);
 				}
-				GUILayout.EndHorizontal();
+				GUILayout.EndHorizontal ();
 			}
 			GUILayout.EndScrollView();
 			GUI.contentColor = Color.white;
-			autoDewarp = GUILayout.Toggle(autoDewarp, "Automagic Dewarp");
-			useKSPSkin = GUILayout.Toggle (useKSPSkin, "Use KSP Skin");
+			autoDewarp = Layout.Toggle(autoDewarp, "Automagic Dewarp");
+//			useKSPSkin = Layout.Toggle (useKSPSkin, "Use KSP Skin");
 			GUILayout.BeginHorizontal ();
-			if (GUILayout.Button ("Close", GUILayout.Height(25))) {
-				onToggle ();
+			if (Layout.Button ("Close", GUILayout.Height(25))) {
+				if (appLauncherButton != null)
+					appLauncherButton.SetFalse ();
+				else
+					onToggle ();
 			}
-			if (GUILayout.Button("Switch Toolbar", GUILayout.Height(25), GUILayout.Width(150))) {
+			if (Layout.Button("Switch Toolbar", GUILayout.Height(25), GUILayout.Width(150))) {
 				useToolbar = !useToolbar;
 				DestroyLauncher ();
 				CreateLauncher ();
+			}
+			if (HighLogic.LoadedSceneIsFlight)
+			if (Layout.Button ("BV Control Panel", GUILayout.Height (25), GUILayout.Width (200))) {
+				if (currentModule != null) {
+					currentModule.SystemCheck ();
+					rcVisible = true;
+					if (appLauncherButton != null)
+						appLauncherButton.SetFalse ();
+					else
+						onToggle ();
+				}
 			}
 			GUILayout.EndHorizontal ();
 			GUILayout.EndVertical();
 			GUI.DragWindow();
 		}
 
+
+		/// <summary>
+		/// Draws UI for module control
+		/// </summary>
+		/// <param name="rcGuiId">Rc GUI identifier.</param>
+		public void DrawRcGUI(int rcGuiId) {
+			if (currentModule == null) {
+				rcVisible = false;
+				return;
+			}
+			double currentTime = Planetarium.GetUniversalTime();
+			GUILayout.BeginVertical ();
+			TimeSpan t = TimeSpan.FromSeconds (currentTime - currentModule.lastTime);
+			Layout.Label (
+				string.Format (
+					"Idle for {0:D2}h:{1:D2}m:{2:D2}s",
+					t.Hours,
+					t.Minutes,
+					t.Seconds
+				)
+			);
+			Layout.LabelAndText ("Target latitude", currentModule.targetLatitude.ToString());
+			Layout.LabelAndText ("Target longitude", currentModule.targetLatitude.ToString());
+			Layout.LabelAndText ("Distance to target", currentModule.distanceToTarget.ToString("N0"));
+			Layout.LabelAndText ("Distance travelled", currentModule.distanceTravelled.ToString("N0"));
+			Layout.LabelAndText ("Average speed", currentModule.averageSpeed.ToString("F"));
+			Layout.LabelAndText ("Solar power", currentModule.solarPower.ToString("F"));
+			Layout.LabelAndText ("Other power", currentModule.otherPower.ToString("F"));
+			Layout.LabelAndText ("Power required", currentModule.powerRequired.ToString("F"));
+			Layout.LabelAndText ("Solar powered", currentModule.solarPowered.ToString ());
+			Layout.LabelAndText ("Is manned", currentModule.isManned.ToString ());
+
+//			Layout.TextField ("lat");
+//			Layout.TextField ("lon");
+			if (Layout.Button ("Pick target on map", Palette.yellow)) {
+				currentModule.PickTarget ();
+			}
+			if (Layout.Button ("Set to active target", Palette.yellow)) {
+				currentModule.SetToActive ();
+			}
+			if (Layout.Button ("Set to active waypoint", Palette.yellow)) {
+				currentModule.SetToWaypoint ();
+			}
+			if (!currentModule.isActive) {
+				if (Layout.Button ("Poehali!!!", Palette.green)) {
+					currentModule.Activate ();
+				}
+			} else {
+				if (Layout.Button ("Deactivate", Palette.red)) {
+					currentModule.Deactivate ();
+				}
+			}
+			if (Layout.Button ("System Check", Palette.yellow)) {
+				currentModule.SystemCheck ();
+			}
+
+			if (Layout.Button ("Close", Palette.red)) {
+				rcVisible = false;
+			}
+
+//			if (Layout.Button ("LZString test")) {
+//				currentModule.TestLZString ();
+//			}
+
+			GUILayout.EndVertical ();
+			GUI.DragWindow ();
+		}
+
+		public void UpdateWayPoints() {
+//			if (wayPoints != null) {
+//				wayPoints.Clear ();
+				wayPoints = PathUtils.DecodePath (currentModule.pathEncoded, currentModule.vessel.mainBody);
+//			}
+		}
+
+		/// <summary>
+		/// Enable module control UI, for use from BonVoyageModule
+		/// </summary>
+		public void ShowModuleControl() {
+			rcVisible = true;
+		}
+
 		public void UpdateRoverState(Vessel vessel, bool stateActive) {
-			for(int i=0; i<activeRovers.Count;++i)
-			{
-				var rover = activeRovers[i];
-				if (rover.vessel == vessel)
-				{
+			for (int i = 0; i < activeRovers.Count; i++) {
+				var rover = activeRovers [i];
+				if (rover.vessel == vessel) {
 					rover.bvActive = stateActive;
 					if (stateActive)
-						InputLockManager.SetControlLock(lockMask, "BonVoyageInputLock");	
+						InputLockManager.SetControlLock (lockMask, "BonVoyageInputLock");
 					else
-						InputLockManager.RemoveControlLock("BonVoyageInputLock");	
+						InputLockManager.RemoveControlLock ("BonVoyageInputLock");	
 					return;
 				}
 			}
@@ -454,7 +584,6 @@ namespace BonVoyage
 						break;
 					}
 				}
-
 			}
 		}
 	}

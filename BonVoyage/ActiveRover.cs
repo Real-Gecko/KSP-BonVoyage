@@ -127,9 +127,10 @@ namespace BonVoyage
 					bvActive = false;
 					BVModule.SetValue ("isActive", "False");
 					BVModule.SetValue ("distanceTravelled", distanceToTarget.ToString ());
+					BVModule.SetValue ("pathEncoded", "");
 
-					BVModule.GetNode ("EVENTS").GetNode ("Activate").SetValue ("active", "True");
-					BVModule.GetNode ("EVENTS").GetNode ("Deactivate").SetValue ("active", "False");
+//					BVModule.GetNode ("EVENTS").GetNode ("Activate").SetValue ("active", "True");
+//					BVModule.GetNode ("EVENTS").GetNode ("Deactivate").SetValue ("active", "False");
 
 					if (BonVoyage.Instance.AutoDewarp) {
 						if (TimeWarp.CurrentRate > 3)
@@ -143,8 +144,8 @@ namespace BonVoyage
 				status = "idle";
 			}
 			else {
-				int step = Convert.ToInt32(Math.Floor(distanceTravelled / 1000));
-				double remainder = distanceTravelled % 1000;
+				int step = Convert.ToInt32(Math.Floor(distanceTravelled / PathFinder.StepSize));
+				double remainder = distanceTravelled % PathFinder.StepSize;
 
 				if (step < path.Count - 1)
 					bearing = GeoUtils.InitialBearing(

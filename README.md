@@ -2,6 +2,26 @@
 Rovers background processing for KSP.
 
 # Changelog
+## 0.12.0
+### Fixes
+- Change a few frequently called `foreach` loops to `for` by [soulsource](https://github.com/Real-Gecko/KSP-BonVoyage/pull/3)
+- Make `Bon Voyage Autopilot` part physicsless by [Suprcheese](https://github.com/Real-Gecko/KSP-BonVoyage/pull/4)
+- `Close` button calls `appLauncherButton.SetFalse`
+- Check for retracted solar panels
+- Average speed is now really average and not the maximum of any wheel's speed
+- Target 200 meters away from navpoint
+- Landing gears can be used as operable wheels by [Kerbas-ad-astra](https://github.com/Real-Gecko/KSP-BonVoyage/pull/6)
+- ModuleWheelBase used to determine if wheel is on the ground by [Kerbas-ad-astra](https://github.com/Real-Gecko/KSP-BonVoyage/pull/6)
+- Allow travelling "below" sea level if celestial body has no ocean
+
+### Changes
+- KSPWheels support
+- Separate UI for module control, no mess in right click menu
+- Integrated UIFramework
+- Path compressed with [lz-string-csharp](https://github.com/jawa-the-hutt/lz-string-csharp) to use less space in save file
+- Show route only for active rover
+- Interstellar reactors support
+
 ## 0.11.1
 - Fixes for KSP 1.2.2
 - Added "Close" button to main window
