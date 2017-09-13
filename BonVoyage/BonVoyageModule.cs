@@ -86,26 +86,13 @@ namespace BonVoyage
 			testResult.damaged = wheelsTest.damaged + KSPWheelsTest.damaged;
 			testResult.online = wheelsTest.online + KSPWheelsTest.online;
 
-			// Average speed will vary depending on number of wheels online from 50 to 70 percent
-			// of average wheels' max speed
-			if (testResult.online != 0)
-				averageSpeed = testResult.maxSpeedSum / testResult.online / 100 * Math.Min (70, (40 + 5 * testResult.online));
-			else
-				averageSpeed = 0;
-
-			// Unmanned rovers drive with 80% speed penalty
-			this.isManned = (this.vessel.GetCrewCount () > 0);
-			if (!this.isManned) //{
-				averageSpeed = averageSpeed * 0.2;
-//			}
-
 			// Generally moving at high speed requires less power than wheels' max consumption
 			// To start BV online wheels consumption must be less than or equal to 35% of max power production
 			powerRequired = wheelsTest.powerRequired / 100 * 35;
 
 			// Check for power production
-			solarPower = CalculateSolarPower ();
-			otherPower = CalculateOtherPower ();
+			solarPower = CalculateSolarPower();
+			otherPower = CalculateOtherPower();
 
 			// If alternative power sources produce more then required
 			// Rover will ride forever :D
@@ -113,10 +100,30 @@ namespace BonVoyage
 				solarPowered = false;
 			else
 				solarPowered = true;
-		}
 
-//		[KSPEvent(guiActive = true, guiName = "Pick target on map")]
-		public void PickTarget()
+            // Average speed will vary depending on number of wheels online from 50 to 70 percent
+            // of average wheels' max speed
+            if (testResult.online != 0)
+                averageSpeed = testResult.maxSpeedSum / testResult.online / 100 * Math.Min(70, (40 + 5 * testResult.online));
+            else
+                averageSpeed = 0;
+
+            // Unmanned rovers drive with 80% speed penalty
+            this.isManned = (this.vessel.GetCrewCount() > 0);
+            if (!this.isManned)
+                averageSpeed = averageSpeed * 0.2;
+
+            // If required power is greater then total power generated, then average speed can be lowered up to 50%
+            if (powerRequired > (solarPower + otherPower))
+            {
+                double speedReduction = (powerRequired - (solarPower + otherPower)) / powerRequired;
+                if (speedReduction <= 0.5)
+                    averageSpeed = averageSpeed * (1 - speedReduction);
+            }
+        }
+
+        //		[KSPEvent(guiActive = true, guiName = "Pick target on map")]
+        public void PickTarget()
 		{
 			if (this.vessel.situation != Vessel.Situations.LANDED)
 				return;
@@ -272,9 +279,12 @@ namespace BonVoyage
 
 			if (solarPower + otherPower < powerRequired)
 			{
+                // If required power is greater ther total power generated, then average speed can be lowered up to 50%
+                double speedReduction = (powerRequired - (solarPower + otherPower)) / powerRequired;
+
                 // Quick and dirty hack, when Kerbalism is present -> disable power check
                 // Kerbalism changes power production and rovers has zero chargeRate
-                if (!AssemblyUtils.AssemblyIsLoaded("Kerbalism"))
+                if ((speedReduction > 0.5) && !AssemblyUtils.AssemblyIsLoaded("Kerbalism"))
                 {
                     ScreenMessages.PostScreenMessage("Your power production is low", 5);
                     ScreenMessages.PostScreenMessage("You need MOAR solar panels", 6);

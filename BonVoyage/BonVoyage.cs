@@ -494,15 +494,22 @@ namespace BonVoyage
 					t.Seconds
 				)
 			);
-			Layout.LabelAndText ("Target latitude", currentModule.targetLatitude.ToString());
+
+            // If required power is greater ther total power generated, then average speed can be lowered up to 50%
+            double speedReduction = 0;
+            if (currentModule.powerRequired > (currentModule.solarPower + currentModule.otherPower))
+                speedReduction = (currentModule.powerRequired - (currentModule.solarPower + currentModule.otherPower)) / currentModule.powerRequired * 100;
+
+            Layout.LabelAndText ("Target latitude", currentModule.targetLatitude.ToString());
 			Layout.LabelAndText ("Target longitude", currentModule.targetLongitude.ToString());
 			Layout.LabelAndText ("Distance to target", currentModule.distanceToTarget.ToString("N0"));
 			Layout.LabelAndText ("Distance travelled", currentModule.distanceTravelled.ToString("N0"));
 			Layout.LabelAndText ("Average speed", currentModule.averageSpeed.ToString("F"));
 			Layout.LabelAndText ("Solar power", currentModule.solarPower.ToString("F"));
 			Layout.LabelAndText ("Other power", currentModule.otherPower.ToString("F"));
-			Layout.LabelAndText ("Power required", currentModule.powerRequired.ToString("F"));
-			Layout.LabelAndText ("Solar powered", currentModule.solarPowered.ToString ());
+			Layout.LabelAndText ("Power required", currentModule.powerRequired.ToString("F")
+                + (speedReduction == 0 ? "" : (((speedReduction > 0) && (speedReduction <= 50)) ? " (Not enough power, average speed was reduced by " + speedReduction.ToString("F") + "%)" : "(Not enough power!)")));
+            Layout.LabelAndText ("Solar powered", currentModule.solarPowered.ToString ());
 			Layout.LabelAndText ("Is manned", currentModule.isManned.ToString ());
 
 //			Layout.TextField ("lat");
