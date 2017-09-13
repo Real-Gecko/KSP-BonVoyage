@@ -131,8 +131,6 @@ namespace BonVoyage
 			distanceTravelled += deltaS;
 			if (distanceTravelled >= distanceToTarget)
 			{
-//				vessel.latitude = targetLatitude;
-//				vessel.longitude = targetLongitude;
 				if (!MoveSafe (targetLatitude, targetLongitude))
 					distanceTravelled -= deltaS;
 				else {
@@ -142,9 +140,6 @@ namespace BonVoyage
 					BVModule.SetValue ("isActive", "False");
 					BVModule.SetValue ("distanceTravelled", distanceToTarget.ToString ());
 					BVModule.SetValue ("pathEncoded", "");
-
-//					BVModule.GetNode ("EVENTS").GetNode ("Activate").SetValue ("active", "True");
-//					BVModule.GetNode ("EVENTS").GetNode ("Deactivate").SetValue ("active", "False");
 
 					if (BonVoyage.Instance.AutoDewarp) {
 						if (TimeWarp.CurrentRate > 3)
@@ -183,16 +178,13 @@ namespace BonVoyage
 					remainder,
 					vessel.mainBody.Radius
 				);
-
-//				vessel.latitude = newCoordinates[0];
-//				vessel.longitude = newCoordinates[1];
+                
 				if (!MoveSafe (newCoordinates [0], newCoordinates [1])) {
 					distanceTravelled -= deltaS;
 					status = "idle";
 				} else
 					status = "roving";
 			}
-//			vessel.altitude = GeoUtils.TerrainHeightAt(vessel.latitude, vessel.longitude, vessel.mainBody);
 			Save (currentTime);
 		}
 
@@ -225,9 +217,6 @@ namespace BonVoyage
 				if (distance <= 2400) {
 					return false;
 				}
-//				VesselRanges ranges = active.vesselRanges.GetSituationRanges(Vessel.Situations.LANDED || Vessel.Situations.FLYING);
-//				vessel.GoOffRails ();
-//				vessel.Load ();
 			}
 
 			vessel.latitude = latitude;

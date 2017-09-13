@@ -109,8 +109,6 @@ namespace BonVoyage
 			labelStyle.fontSize = Screen.height / 20;
 			labelStyle.fontStyle = FontStyle.Bold;
 			labelStyle.normal.textColor = Color.red;
-
-//			mapMarker = GameDatabase.Instance.GetTexture("BonVoyage/Textures/map-marker", false);
 		}
 
 		/// <summary>
@@ -186,31 +184,14 @@ namespace BonVoyage
 				return;
 			
 			currentModule = vessel.FindPartModuleImplementing<BonVoyageModule> ();
-//			if (wayPoints != null)
-//				wayPoints.Clear ();
 			if (currentModule != null) {
 				currentModule.SystemCheck ();
 				UpdateWayPoints ();
-//				wayPoints = PathUtils.DecodePath (currentModule.pathEncoded, currentModule.vessel.mainBody);
 				if (currentModule.isActive) {
 					InputLockManager.SetControlLock (lockMask, "BonVoyageInputLock");
 					return;
 				}
 			}
-
-//			currentModule = null;
-//			foreach (var rover in activeRovers)
-//			{
-//				if (rover.vessel == vessel)
-////					ControlThis (rover.vessel.FindPartModuleImplementing<BonVoyageModule> (), false);
-//					currentModule = rover.vessel.FindPartModuleImplementing<BonVoyageModule>();
-//				
-//				if (rover.vessel == vessel && rover.bvActive)
-//				{
-//					InputLockManager.SetControlLock(lockMask, "BonVoyageInputLock");
-//					return;
-//				}
-//			}
 			InputLockManager.RemoveControlLock("BonVoyageInputLock");
 		}
 
@@ -307,7 +288,7 @@ namespace BonVoyage
 		}
 
 		/// <summary>
-		/// Laucnher ready to be initialized
+		/// Launcher ready to be initialized
 		/// </summary>
 		public void onGUIApplicationLauncherReady()
 		{
@@ -415,8 +396,7 @@ namespace BonVoyage
 						FlightDriver.StartAndFocusVessel ("persistent", FlightGlobals.Vessels.IndexOf (rover.vessel));
 					}
 				}
-
-//				Layout.LabelAndText (rover.vessel.mainBody.theName, rover.status);
+                
 				Layout.Label (rover.vessel.mainBody.bodyName, GUILayout.Width(75));
 				Layout.Label (rover.status, GUILayout.Width (125));
 
@@ -514,8 +494,6 @@ namespace BonVoyage
             Layout.LabelAndText ("Solar powered", currentModule.solarPowered.ToString ());
 			Layout.LabelAndText ("Is manned", currentModule.isManned.ToString ());
 
-//			Layout.TextField ("lat");
-//			Layout.TextField ("lon");
 			if (Layout.Button ("Pick target on map", Palette.yellow)) {
 				currentModule.PickTarget ();
 			}
@@ -542,19 +520,12 @@ namespace BonVoyage
 				rcVisible = false;
 			}
 
-//			if (Layout.Button ("LZString test")) {
-//				currentModule.TestLZString ();
-//			}
-
 			GUILayout.EndVertical ();
 			GUI.DragWindow ();
 		}
 
 		public void UpdateWayPoints() {
-//			if (wayPoints != null) {
-//				wayPoints.Clear ();
 				wayPoints = PathUtils.DecodePath (currentModule.pathEncoded, currentModule.vessel.mainBody);
-//			}
 		}
 
 		/// <summary>

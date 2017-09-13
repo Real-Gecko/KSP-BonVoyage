@@ -28,12 +28,6 @@ namespace BonVoyage
 		}
 
 		private bool mapLocationMode;
-//		private bool showUtils = false;
-
-//		private List<Vector3d> wayPoints;
-
-//		private Rect guiRect;
-//		private GUIStyle labelStyle;
 
 		[KSPField(isPersistant = true)] //, guiName = "Active", guiActive = true)]
 		public bool isActive = false;
@@ -151,7 +145,7 @@ namespace BonVoyage
             }
         }
 
-        //		[KSPEvent(guiActive = true, guiName = "Pick target on map")]
+        //[KSPEvent(guiActive = true, guiName = "Pick target on map")]
         public void PickTarget()
 		{
 			if (this.vessel.situation != Vessel.Situations.LANDED)
@@ -161,12 +155,6 @@ namespace BonVoyage
             MapView.EnterMapView();
 			mapLocationMode = true;
         }
-
-//		[KSPEvent(guiActive = true, guiName = "KSPWheel Check")]
-//		public void KSPWheelCheck()
-//		{
-////			DealWithKSPWheel ();
-//		}
 
         // Shutdown/Activate BV controller
 		[KSPEvent(guiActive = true, guiName = "Shutdown BV Controller")]
@@ -186,11 +174,10 @@ namespace BonVoyage
 
         [KSPEvent(guiActive = true, guiName = "BV Control Panel")]
 		public void BVControlPanel() {
-//			BonVoyage.Instance.ControlThis (this);
 			BonVoyage.Instance.ShowModuleControl();
 		}
 
-//		[KSPEvent(guiActive = true, guiName = "Set to active target")]
+        //[KSPEvent(guiActive = true, guiName = "Set to active target")]
 		public void SetToActive()
 		{
 			if (this.vessel.targetObject == null || this.vessel.situation != Vessel.Situations.LANDED)
@@ -225,7 +212,7 @@ namespace BonVoyage
 			}
 		}
 
-//		[KSPEvent(guiActive = true, guiName = "Set to active waypoint", isPersistent = true)]
+        //[KSPEvent(guiActive = true, guiName = "Set to active waypoint", isPersistent = true)]
 		public void SetToWaypoint() {
 			NavWaypoint navPoint = NavWaypoint.fetch;
 			if (navPoint == null || !navPoint.IsActive || navPoint.Body != this.vessel.mainBody) {
@@ -248,7 +235,7 @@ namespace BonVoyage
 			}
 		}
 
-//		[KSPEvent(guiActive = true, guiName = "Poehali!!!", isPersistent = true)]
+        //[KSPEvent(guiActive = true, guiName = "Poehali!!!", isPersistent = true)]
 		public void Activate()
 		{
 			if (this.vessel.situation != Vessel.Situations.LANDED)
@@ -265,21 +252,7 @@ namespace BonVoyage
 				return;
 			}
 
-//			averageSpeed = 0;
-//			double powerRequired = 0;
-
 			SystemCheck ();
-
-            //			WheelTestResult wheelsTest = CheckWheels ();
-            //			WheelTestResult KSPWheelsTest = CheckKSPWheels ();
-            //
-            //			// Combine the two
-            //			testResult.powerRequired = wheelsTest.powerRequired + KSPWheelsTest.powerRequired;
-            //			testResult.maxSpeedSum = wheelsTest.maxSpeedSum + KSPWheelsTest.maxSpeedSum;
-            //			testResult.inTheAir = wheelsTest.inTheAir + KSPWheelsTest.inTheAir;
-            //			testResult.operable = wheelsTest.operable + KSPWheelsTest.operable;
-            //			testResult.damaged = wheelsTest.damaged + KSPWheelsTest.damaged;
-            //			testResult.online = wheelsTest.online + KSPWheelsTest.online;
 
             // No driving until 3 operable wheels are touching the ground - tricycles are allowed
             //if (testResult.inTheAir > 0 && testResult.operable < 4)
@@ -304,23 +277,9 @@ namespace BonVoyage
 				return;
 			}
 
-			// Average speed will vary depending on number of wheels online from 50 to 70 percent
-			// of average wheels' max speed
-//			averageSpeed = testResult.maxSpeedSum / testResult.online / 100 * Math.Min(70, (40 + 5 * testResult.online));
-
 			// Unmanned rovers drive with 80% speed penalty
-//			this.isManned = (this.vessel.GetCrewCount () > 0);
-			if (!this.isManned) //{
-//				averageSpeed = averageSpeed * 0.2;
+			if (!this.isManned)
 				ScreenMessages.PostScreenMessage ("Rover is unmanned, 80% speed penalty!");
-//			}
-//
-//			// Generally moving at high speed requires less power than wheels' max consumption
-//			// BV will require max online wheels consumption to be less than 35% of max power production
-//			powerRequired = wheelsTest.powerRequired / 100 * 35;
-
-//			double solarPower = CalculateSolarPower();
-//			double otherPower = CalculateOtherPower();
 
 			if (solarPower + otherPower < powerRequired)
 			{
@@ -338,20 +297,13 @@ namespace BonVoyage
                 }
 			}
 
-//			// If alternative power sources produce more then required
-//			// Rover will ride forever :D
-//			if (otherPower >= powerRequired)
-//				solarPowered = false;
-
 			isActive = true;
 			distanceTravelled = 0;
-//			Events["Activate"].active = false;
-//			Events["Deactivate"].active = true;
 			BonVoyage.Instance.UpdateRoverState(this.vessel, true);
 			ScreenMessages.PostScreenMessage("Bon Voyage!!!");
 		}
 
-//		[KSPEvent(guiActive = true, guiName = "Deactivate", active = false, isPersistent = true)]
+        //[KSPEvent(guiActive = true, guiName = "Deactivate", active = false, isPersistent = true)]
 		public void Deactivate()
 		{
 			isActive = false;
@@ -359,35 +311,8 @@ namespace BonVoyage
 			targetLongitude = 0;
 			distanceTravelled = 0;
 			distanceToTarget = 0;
-//			wayPoints.Clear ();
-//			Events["Activate"].active = true;
-//			Events["Deactivate"].active = false;
 			BonVoyage.Instance.UpdateRoverState(this.vessel, false);
 		}
-
-//		[KSPEvent(guiActive = true, guiName = "Toggle utilities")]
-//		public void ToggleUtils()
-//		{
-//			showUtils = !showUtils;
-//			Events["CalculateSolar"].active = showUtils;
-//			Events["CalculateOther"].active = showUtils;
-////			Events["CalculateAverageSpeed"].active = showUtils;
-//			Events["CalculatePowerRequirement"].active = showUtils;
-//
-//			//Clean up previous builds
-//			Events["CalculateSolar"].guiActive = true;
-//			Events["CalculateOther"].guiActive = true;
-//			if (Events["FindPath"] != null)
-//			{
-//				Events["FindPath"].guiActive = false;
-//				Events["FindPath"].active = false;
-//			}
-//			if (Events["PickTest"] != null)
-//			{
-//				Events["PickTest"].guiActive = false;
-//				Events["PickTest"].active = false;
-//			}
-//		}
 
 		private void FindPath()
 		{
@@ -406,62 +331,14 @@ namespace BonVoyage
 			{
 				pathEncoded = PathUtils.EncodePath(finder.path);
 				BonVoyage.Instance.UpdateWayPoints ();
-//				wayPoints = PathUtils.DecodePath (pathEncoded, this.vessel.mainBody);
 			}
 			else
 				ScreenMessages.PostScreenMessage("No path found, try some other location!");
 		}
 
-//		public void TestLZString() {
-//			KSP.IO.File.WriteAllText<BonVoyage> (LZString.compressToBase64(pathEncoded), "lzstring");
-//		}
-
-//		[KSPEvent(guiActive = true, guiName = "Calculate solar", active = false)]
-//		public void CalculateSolar()
-//		{
-//			double solarPower = CalculateSolarPower();
-//			ScreenMessages.PostScreenMessage(String.Format("{0:F} electric charge/second", solarPower));
-//		}
-
-//		[KSPEvent(guiActive = true, guiName = "Calculate other", active = false)]
-//		public void CalculateOther()
-//		{
-//			double otherPower = CalculateOtherPower();
-//			ScreenMessages.PostScreenMessage(String.Format("{0:F} electric charge/second", otherPower));
-//		}
-
-//		[KSPEvent(guiActive = true, guiName = "Calculate average speed", active = false)]
-//		public void CalculateAverageSpeed() {
-//			List<ModuleWheels.ModuleWheelMotor> operableWheels = new List<ModuleWheels.ModuleWheelMotor>();
-//			for(int i=0; i< this.vessel.parts.Count;++i)
-//			{
-//				ModuleWheels.ModuleWheelMotor wheelMotor = this.vessel.parts[i].FindModuleImplementing<ModuleWheels.ModuleWheelMotor>();
-//				if (wheelMotor != null)
-//				{
-//					operableWheels.Add(wheelMotor);
-//				}
-//			}
-//
-//			// Average speed will vary depending on number of wheels online from 50 to 70 percent of wheel max speed
-//			this.averageSpeed = GetAverageSpeed(operableWheels);
-//		}
-
-//		[KSPEvent(guiActive = true, guiName = "Calculate power requirement", active = false)]
+        //[KSPEvent(guiActive = true, guiName = "Calculate power requirement", active = false)]
 		public void CalculatePowerRequirement()
 		{
-//			double powerRequired = 0;
-//			for (int i = 0; i < this.vessel.parts.Count; ++i) {
-//				ModuleWheels.ModuleWheelMotor wheelMotor = this.vessel.parts [i].FindModuleImplementing<ModuleWheels.ModuleWheelMotor> ();
-//				if (wheelMotor != null) {
-//					if (wheelMotor.motorEnabled)
-//						//						powerRequired += wheelMotor.inputResource.rate;
-//						powerRequired += wheelMotor.avgResRate;
-//				}
-//			}
-
-			// Average speed will vary depending on number of wheels online from 50 to 70 percent of wheel max speed
-//			powerRequired = powerRequired / 100 * 35;
-//			ScreenMessages.PostScreenMessage("Current power requirements " + powerRequired.ToString("F2") + "/s");
 			double powerRequired = 0;
 
 			WheelTestResult wheelsTest = CheckWheels ();
@@ -492,7 +369,6 @@ namespace BonVoyage
                 Events["ToggleBVController"].guiName = (!isShutdown ? "Shutdown" : "Activate") + " BV Controller";
                 Events["BVControlPanel"].guiActive = !isShutdown;
             }
-            //			wayPoints = PathUtils.DecodePath (pathEncoded, this.vessel.mainBody);
         }
 
 		private void Update() {
@@ -504,15 +380,6 @@ namespace BonVoyage
 		{
 			if (HighLogic.LoadedSceneIsEditor)
 				return;
-
-
-//			if (MapView.MapIsEnabled)
-//			{
-//				if (wayPoints.Count > 0)
-//				{
-//					GLUtils.DrawCurve (wayPoints);
-//				}
-//			}
 
 			if (mapLocationMode)
 			{
@@ -542,31 +409,6 @@ namespace BonVoyage
 				}
 			}
 		}
-
-//		private double GetAverageSpeed(List<ModuleWheels.ModuleWheelMotor> operableWheels)
-//		{
-//			double averageSpeed = 0;
-//			int wheelsOnline = 0;
-//			for(int i=0;i<operableWheels.Count;++i)
-//			{
-//			    var wheelMotor = operableWheels[i];
-//				if (wheelMotor.motorEnabled)
-//				{
-//					wheelsOnline++;
-//					double maxWheelSpeed = 0;
-//					if (wheelMotor.part.name == "roverWheel1") //RoveMax Model M1 gives crazy values
-//						maxWheelSpeed = 42;
-//					else
-//						maxWheelSpeed = wheelMotor.wheelSpeedMax;
-//					averageSpeed = Math.Max(averageSpeed, maxWheelSpeed);
-//				}
-//			}
-//			if (wheelsOnline < 2)
-//				return 0;
-//
-//			averageSpeed = averageSpeed / 100 * Math.Min(70, (40 + 5 * wheelsOnline));
-//			return averageSpeed;
-//		}
 
 		private double CalculateSolarPower()
 		{
@@ -801,7 +643,6 @@ namespace BonVoyage
 			foreach (var part in KSPWheels) {
 				// PartModuleList is not generic List<T>??? Fuck this API!!!
 				List<PartModule> partModules = part.Modules.GetModules<PartModule>();
-//				ScreenMessages.PostScreenMessage (part.name);
 				PartModule wheelBase = partModules.Find (t => t.moduleName == "KSPWheelBase");
 				// Wheel is damaged
 				if (wheelBase.Fields.GetValue ("persistentState").ToString() == "BROKEN") {
@@ -811,13 +652,6 @@ namespace BonVoyage
 
 				PartModule wheelDamage = partModules.Find (t => t.moduleName == "KSPWheelDamage");
 				if (wheelDamage != null) {
-					// Wheel is damaged
-//					if (double.Parse (wheelDamage.Fields.GetValue ("wheelWear").ToString ()) == 1 &&
-//					    double.Parse (wheelDamage.Fields.GetValue ("motorWear").ToString ()) == 1 &&
-//					    double.Parse (wheelDamage.Fields.GetValue ("suspensionWear").ToString ()) == 1) {
-//						damaged++;
-//						continue;
-//					}
 					// Wheel is not touching the ground
 					if (double.Parse (wheelDamage.Fields.GetValue ("loadStress").ToString ()) == 0) {
 						inTheAir++;
@@ -852,22 +686,6 @@ namespace BonVoyage
 
 		// Most elegant solution ever :D
 		private double KSPWheelPower(string name, double scale) {
-		//	KF_SurfaceTrack = 1.28
-		//	KF_WheelTiny = 0.5
-		//	KF_WheelLarge = 24.7
-		//	KF_TrackLong = 6
-		//	KF_TrackMedium = 3.47
-		//	KF_WheelMedium = 4
-		//	KF_TrackRBIInverting = 10
-		//	KF_TrackRBIMole = 57
-		//	KF_TrackRBITiny = 2.32
-		//	KF_ScrewDrive2 = 7.37
-		//	KF_TrackS = 1.3
-		//	KF_WheelSmall = 4
-		//	KF_TrackSmall = 2.5
-		//	KF-WheelTruck-Dual = 5
-		//	KF-WheelTruck-Single = 4
-//			name = name.Replace (".", "_");
 			switch (name) {
 			case "KF.SurfaceTrack":
 				return 1.28 * scale;
