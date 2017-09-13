@@ -218,7 +218,7 @@ namespace BonVoyage
 
 			vessel.latitude = latitude;
 			vessel.longitude = longitude;
-			vessel.altitude = altitude;
+			vessel.altitude = altitude + vessel.heightFromTerrain;
 			return true;
 		}
 
