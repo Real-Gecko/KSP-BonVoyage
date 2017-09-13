@@ -576,10 +576,12 @@ namespace BonVoyage
 					}
 				}
 
-				// USI reactors
-				ModuleResourceConverter converterModule = part.FindModuleImplementing<ModuleResourceConverter>();
+                // WBI reactors, USI reactors and MKS Power Pack
+                ModuleResourceConverter converterModule = part.FindModuleImplementing<ModuleResourceConverter>();
 				if (converterModule != null) {
-					if (converterModule.ModuleIsActive() && converterModule.ConverterName == "Reactor") {
+                    if (converterModule.ModuleIsActive()
+                        && ((converterModule.ConverterName == "Nuclear Reactor") || (converterModule.ConverterName == "Reactor") || (converterModule.ConverterName == "Generator")))
+                    {
 						for(int j=0;j<converterModule.outputList.Count;++j)
 						{
 						    var resource = converterModule.outputList[j];
