@@ -269,10 +269,15 @@ namespace BonVoyage
 
 			if (solarPower + otherPower < powerRequired)
 			{
-				ScreenMessages.PostScreenMessage ("Your power production is low", 5);
-				ScreenMessages.PostScreenMessage ("You need MOAR solar panels", 6);
-				ScreenMessages.PostScreenMessage ("Or maybe a dozen of fission reactors", 7);
-				return;
+                // Quick and dirty hack, when Kerbalism is present -> disable power check
+                // Kerbalism changes power production and rovers has zero chargeRate
+                if (!AssemblyUtils.AssemblyIsLoaded("Kerbalism"))
+                {
+                    ScreenMessages.PostScreenMessage("Your power production is low", 5);
+                    ScreenMessages.PostScreenMessage("You need MOAR solar panels", 6);
+                    ScreenMessages.PostScreenMessage("Or maybe a dozen of fission reactors", 7);
+                    return;
+                }
 			}
 
 //			// If alternative power sources produce more then required

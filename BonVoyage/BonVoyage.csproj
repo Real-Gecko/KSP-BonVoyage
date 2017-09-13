@@ -53,6 +53,7 @@
     <Compile Include="PathFinder\Hex.cs" />
     <Compile Include="PathFinder\Path.cs" />
     <Compile Include="PathFinder\PathFinder.cs" />
+    <Compile Include="Utilities\AssemblyUtils.cs" />
     <Compile Include="Utilities\GeoUtils.cs" />
     <Compile Include="Utilities\ToolbarWrapper.cs" />
     <Compile Include="Utilities\GLUtils.cs" />
@@ -65,7 +66,9 @@
     <Compile Include="Utilities\LZString.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
-  <ItemGroup />
+  <ItemGroup>
+    <Content Include="Issues.txt" />
+  </ItemGroup>
   <PropertyGroup>
     <PostBuildEvent>copy /Y "$(TargetDir)$(TargetName).dll" "$(SolutionDir)GameData\BonVoyage\$(TargetName).dll"</PostBuildEvent>
   </PropertyGroup>
