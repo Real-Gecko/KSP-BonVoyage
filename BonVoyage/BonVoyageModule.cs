@@ -38,7 +38,10 @@ namespace BonVoyage
 		[KSPField(isPersistant = true)] //, guiName = "Active", guiActive = true)]
 		public bool isActive = false;
 
-		[KSPField(isPersistant = true)] //, guiName = "Target latitude", guiActive = true, guiFormat = "F2")]
+        [KSPField(isPersistant = true)]
+        public bool isShutdown = false;
+
+        [KSPField(isPersistant = true)] //, guiName = "Target latitude", guiActive = true, guiFormat = "F2")]
 		public double targetLatitude = 0;
 
 		[KSPField(isPersistant = true)] //, guiName = "Target longitude", guiActive = true, guiFormat = "F2")]
@@ -131,7 +134,7 @@ namespace BonVoyage
             BonVoyage.Instance.HideModuleControl();
             MapView.EnterMapView();
 			mapLocationMode = true;
-		}
+        }
 
 //		[KSPEvent(guiActive = true, guiName = "KSPWheel Check")]
 //		public void KSPWheelCheck()
@@ -139,8 +142,24 @@ namespace BonVoyage
 ////			DealWithKSPWheel ();
 //		}
 
-		[KSPEvent(guiActive = true, guiName = "BV Control Panel")]
-		public void ControlPanel() {
+        // Shutdown/Activate BV controller
+		[KSPEvent(guiActive = true, guiName = "Shutdown BV Controller")]
+        public void ToggleBVController()
+        {
+            isShutdown = !isShutdown;
+            Events["ToggleBVController"].guiName = (!isShutdown? "Shutdown" : "Activate") + " BV Controller";
+            Events["BVControlPanel"].guiActive = !isShutdown;
+            if (isShutdown)
+            {
+                if (isActive)
+                    Deactivate();
+                BonVoyage.Instance.HideModuleControl();
+            }
+            BonVoyage.Instance.LoadRovers();
+        }
+
+        [KSPEvent(guiActive = true, guiName = "BV Control Panel")]
+		public void BVControlPanel() {
 //			BonVoyage.Instance.ControlThis (this);
 			BonVoyage.Instance.ShowModuleControl();
 		}
@@ -442,8 +461,13 @@ namespace BonVoyage
 		{
 			if (HighLogic.LoadedSceneIsEditor)
 				return;
-//			wayPoints = PathUtils.DecodePath (pathEncoded, this.vessel.mainBody);
-		}
+            if (HighLogic.LoadedSceneIsFlight)
+            {
+                Events["ToggleBVController"].guiName = (!isShutdown ? "Shutdown" : "Activate") + " BV Controller";
+                Events["BVControlPanel"].guiActive = !isShutdown;
+            }
+            //			wayPoints = PathUtils.DecodePath (pathEncoded, this.vessel.mainBody);
+        }
 
 		private void Update() {
 			if (isActive)

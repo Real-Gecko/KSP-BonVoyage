@@ -458,8 +458,10 @@ namespace BonVoyage
 				CreateLauncher ();
 			}
 			if (HighLogic.LoadedSceneIsFlight)
-			if (Layout.Button ("BV Control Panel", GUILayout.Height (25), GUILayout.Width (200))) {
-				if (currentModule != null) {
+			if (Layout.Button ("BV Control Panel", GUILayout.Height (25), GUILayout.Width (200)))
+            {
+                if ((currentModule != null) && !currentModule.isShutdown)
+                {
 					currentModule.SystemCheck ();
 					rcVisible = true;
 					if (appLauncherButton != null)
@@ -592,10 +594,19 @@ namespace BonVoyage
 				ConfigNode vesselConfigNode = new ConfigNode();
 				vessel.protoVessel.Save(vesselConfigNode);
 
-				foreach(ConfigNode part in vesselConfigNode.GetNodes("PART")) {
+				foreach(ConfigNode part in vesselConfigNode.GetNodes("PART"))
+                {
 					ConfigNode BVModule = part.GetNode("MODULE", "name", "BonVoyageModule");
-					if (BVModule != null) {
-						activeRovers.Add (new ActiveRover (vessel, BVModule, vesselConfigNode));
+					if (BVModule != null)
+                    {
+                        bool isShutdown = false;
+                        if (BVModule.HasValue("isShutdown")) // Backward compatibility
+                            isShutdown = bool.Parse(BVModule.GetValue("isShutdown"));
+                        if (vessel.isActiveVessel)
+                            isShutdown = vessel.FindPartModuleImplementing<BonVoyageModule>().isShutdown;
+
+                        if (!isShutdown)
+                            activeRovers.Add (new ActiveRover (vessel, BVModule, vesselConfigNode));
 						break;
 					}
 				}
