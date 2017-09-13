@@ -2,6 +2,21 @@
 Rovers background processing for KSP.
 
 # Changelog
+## 0.13.0
+### Fixes
+- Fixed target longitude display
+- App launcher button fix
+- Adjusted vessel altitude from terrain
+- Night time ride fix
+
+### Changes
+- KSP 1.3 compatibility
+- WBI reactors and MKS power pack compatibility
+- Support for tricycles
+- Hide BV window in map view
+- Average speed change - reduction based on power
+- Shutdown/Activate BV Controller
+
 ## 0.12.0
 ### Fixes
 - Change a few frequently called `foreach` loops to `for` by [soulsource](https://github.com/Real-Gecko/KSP-BonVoyage/pull/3)
