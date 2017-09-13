@@ -495,7 +495,7 @@ namespace BonVoyage
 				)
 			);
 			Layout.LabelAndText ("Target latitude", currentModule.targetLatitude.ToString());
-			Layout.LabelAndText ("Target longitude", currentModule.targetLatitude.ToString());
+			Layout.LabelAndText ("Target longitude", currentModule.targetLongitude.ToString());
 			Layout.LabelAndText ("Distance to target", currentModule.distanceToTarget.ToString("N0"));
 			Layout.LabelAndText ("Distance travelled", currentModule.distanceTravelled.ToString("N0"));
 			Layout.LabelAndText ("Average speed", currentModule.averageSpeed.ToString("F"));

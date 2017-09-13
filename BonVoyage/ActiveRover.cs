@@ -230,8 +230,8 @@ namespace BonVoyage
                 "Rover arrived",
 				//------------------------------------------
                 "<color=#74B4E2>" + vessel.vesselName + "</color>" +
-                " has arrived to destination\n<color=#AED6EE>LAT:" +
-                targetLatitude.ToString ("F2") + "</color>\n<color=#AED6EE>LON:" +
+                " has arrived to destination\n<color=#AED6EE>LAT: " +
+                targetLatitude.ToString ("F2") + "</color>\n<color=#AED6EE>LON: " +
                 targetLongitude.ToString ("F2") +
                 "</color>\n<color=#82BCE5>At " + vessel.mainBody.name + ".</color>\n" +
                 "Distance travelled: " +
