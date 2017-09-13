@@ -56,7 +56,11 @@ namespace BonVoyage
 		[KSPField(isPersistant = true)] //, guiName = "Average speed", guiActive = true)]
 		public double averageSpeed = 0;
 
-		[KSPField(isPersistant = true)] //, guiName = "Last Updated", guiActive = false)]
+        // Average speed at night
+        [KSPField(isPersistant = true)]
+        public double averageSpeedAtNight = 0;
+
+        [KSPField(isPersistant = true)] //, guiName = "Last Updated", guiActive = false)]
 		public double lastTime = 0;
 
 		[KSPField(isPersistant = true)] //, guiName = "Solar powered", guiActive = false)]
@@ -97,12 +101,18 @@ namespace BonVoyage
 			solarPower = CalculateSolarPower();
 			otherPower = CalculateOtherPower();
 
-			// If alternative power sources produce more then required
-			// Rover will ride forever :D
-			if (otherPower >= powerRequired)
-				solarPowered = false;
-			else
-				solarPowered = true;
+            // Solar powered?
+            if (solarPower > 0.0)
+                solarPowered = true;
+            else
+                solarPowered = false;
+
+            // If alternative power sources produce more then required
+            // Rover will ride forever :D
+            //if (otherPower >= powerRequired)
+			//	solarPowered = false;
+			//else
+			//	solarPowered = true;
 
             // Average speed will vary depending on number of wheels online from 50 to 70 percent
             // of average wheels' max speed
@@ -116,12 +126,28 @@ namespace BonVoyage
             if (!this.isManned)
                 averageSpeed = averageSpeed * 0.2;
 
+            // Base average speed at night is the same as average speed, if there is other power source. Zero otherwise.
+            if (otherPower > 0.0)
+                averageSpeedAtNight = averageSpeed;
+            else
+                averageSpeedAtNight = 0;
+
             // If required power is greater then total power generated, then average speed can be lowered up to 50%
             if (powerRequired > (solarPower + otherPower))
             {
                 double speedReduction = (powerRequired - (solarPower + otherPower)) / powerRequired;
                 if (speedReduction <= 0.5)
                     averageSpeed = averageSpeed * (1 - speedReduction);
+            }
+
+            // If required power is greater then other power generated, then average speed at night can be lowered up to 50%
+            if (powerRequired > otherPower)
+            {
+                double speedReduction = (powerRequired - otherPower) / powerRequired;
+                if (speedReduction <= 0.5)
+                    averageSpeedAtNight = averageSpeedAtNight * (1 - speedReduction);
+                else
+                    averageSpeedAtNight = 0;
             }
         }
 

@@ -17,10 +17,12 @@ namespace BonVoyage
 		private double targetLongitude;
 
 		private double averageSpeed;
-		private double speedMultiplier;
-		public double AverageSpeed { get { return averageSpeed * speedMultiplier; } }
+        private double averageSpeedAtNight;
+        private double speedMultiplier;
+        private double angle;
+        public double AverageSpeed { get { return ((angle <= 90) ? (averageSpeed * speedMultiplier) : (averageSpeedAtNight * speedMultiplier)); } }
 
-		private double distanceTravelled;
+        private double distanceTravelled;
 		private double distanceToTarget;
 		public double yetToTravel { get { return distanceToTarget - distanceTravelled; } }
 
@@ -59,8 +61,17 @@ namespace BonVoyage
 			targetLatitude = double.Parse (BVModule.GetValue ("targetLatitude"));
 			targetLongitude = double.Parse (BVModule.GetValue ("targetLongitude"));
 			averageSpeed = double.Parse(BVModule.GetValue ("averageSpeed"));
+            if (BVModule.HasValue("averageSpeedAtNight")) // Backward compatibility
+                averageSpeedAtNight = double.Parse(BVModule.GetValue("averageSpeedAtNight"));
+            else
+            {
+                if (!solarPowered)
+                    averageSpeedAtNight = averageSpeed;
+                else
+                    averageSpeedAtNight = 0;
+            }
 
-			path = PathUtils.DecodePath(BVModule.GetValue("pathEncoded"));
+            path = PathUtils.DecodePath(BVModule.GetValue("pathEncoded"));
 			speedMultiplier = 1.0;
 		}
 
@@ -83,10 +94,11 @@ namespace BonVoyage
 
 			Vector3d vesselPos = vessel.mainBody.position - vessel.GetWorldPos3D();
 			Vector3d toKerbol = vessel.mainBody.position - FlightGlobals.Bodies[0].position;
-			double angle = Vector3d.Angle(vesselPos, toKerbol);
+            //double angle = Vector3d.Angle(vesselPos, toKerbol);
+            angle = Vector3d.Angle(vesselPos, toKerbol);
 
-			// Speed penalties at twighlight and at night
-			if (angle > 90 && isManned)
+            // Speed penalties at twighlight and at night
+            if (angle > 90 && isManned)
 				speedMultiplier = 0.25;
 			else if (angle > 85 && isManned)
 				speedMultiplier = 0.5;
@@ -95,10 +107,12 @@ namespace BonVoyage
 			else
 				speedMultiplier = 1.0;
 
-			// No moving at night, or when there's not enougth solar light for solar powered rovers
-			if (angle > 90 && solarPowered)
-			{
-				status = "awaiting sunlight";
+            // No moving at night, or when there's not enougth solar light for solar powered rovers
+            //if (angle > 90 && solarPowered)
+            // No moving at night, if there isn't power source
+            if ((angle > 90) && (averageSpeedAtNight == 0.0))
+            {
+                status = "awaiting sunlight";
 				lastTime = currentTime;
 				BVModule.SetValue("lastTime", currentTime.ToString());
 				vessel.protoVessel = new ProtoVessel(vesselConfigNode, HighLogic.CurrentGame);
