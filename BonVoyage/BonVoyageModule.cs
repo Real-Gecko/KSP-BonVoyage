@@ -121,7 +121,8 @@ namespace BonVoyage
 			if (this.vessel.situation != Vessel.Situations.LANDED)
 				return;
 			Deactivate();
-			MapView.EnterMapView();
+            BonVoyage.Instance.HideModuleControl();
+            MapView.EnterMapView();
 			mapLocationMode = true;
 		}
 
@@ -217,27 +218,29 @@ namespace BonVoyage
 
 			SystemCheck ();
 
-//			WheelTestResult wheelsTest = CheckWheels ();
-//			WheelTestResult KSPWheelsTest = CheckKSPWheels ();
-//
-//			// Combine the two
-//			testResult.powerRequired = wheelsTest.powerRequired + KSPWheelsTest.powerRequired;
-//			testResult.maxSpeedSum = wheelsTest.maxSpeedSum + KSPWheelsTest.maxSpeedSum;
-//			testResult.inTheAir = wheelsTest.inTheAir + KSPWheelsTest.inTheAir;
-//			testResult.operable = wheelsTest.operable + KSPWheelsTest.operable;
-//			testResult.damaged = wheelsTest.damaged + KSPWheelsTest.damaged;
-//			testResult.online = wheelsTest.online + KSPWheelsTest.online;
+            //			WheelTestResult wheelsTest = CheckWheels ();
+            //			WheelTestResult KSPWheelsTest = CheckKSPWheels ();
+            //
+            //			// Combine the two
+            //			testResult.powerRequired = wheelsTest.powerRequired + KSPWheelsTest.powerRequired;
+            //			testResult.maxSpeedSum = wheelsTest.maxSpeedSum + KSPWheelsTest.maxSpeedSum;
+            //			testResult.inTheAir = wheelsTest.inTheAir + KSPWheelsTest.inTheAir;
+            //			testResult.operable = wheelsTest.operable + KSPWheelsTest.operable;
+            //			testResult.damaged = wheelsTest.damaged + KSPWheelsTest.damaged;
+            //			testResult.online = wheelsTest.online + KSPWheelsTest.online;
 
-			// No driving until 4 operable wheels are touching the ground
-			if (testResult.inTheAir > 0 && testResult.operable < 4)
-			{
+            // No driving until 3 operable wheels are touching the ground - tricycles are allowed
+            //if (testResult.inTheAir > 0 && testResult.operable < 4)
+            if (testResult.inTheAir > 0 && testResult.operable < 3)
+            {
 				ScreenMessages.PostScreenMessage("Wheels are not touching the ground, are you serious???");
 				return;
 			}
 
-			//Buy some wheels, maaaan
-			if (testResult.operable < 4)
-			{
+            //Buy some wheels, maaaan
+            //if (testResult.operable < 4)
+            if (testResult.operable < 3)
+            {
 				ScreenMessages.PostScreenMessage("Don't be a miser, add some more wheels to you rover!");
 				return;
 			}
@@ -472,7 +475,8 @@ namespace BonVoyage
 					FindPath();
 					if (distanceToTarget > 0)
 					{
-						mapLocationMode = false;
+                        BonVoyage.Instance.ShowModuleControl();
+                        mapLocationMode = false;
 						MapView.ExitMapView();
 					}
 				}

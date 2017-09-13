@@ -273,8 +273,8 @@ namespace BonVoyage
 					onToggle();
 				};
 			}
-			else if (appLauncherButton == null)
-			{
+			else if ((appLauncherButton == null) && !useToolbar) // App launcher button was created even with useToolbar switch set to true
+            {
 				appLauncherButton = ApplicationLauncher.Instance.AddModApplication(
 					onAppTrue,
 					onAppFalse,
@@ -553,9 +553,17 @@ namespace BonVoyage
 		/// </summary>
 		public void ShowModuleControl() {
 			rcVisible = true;
-		}
+        }
 
-		public void UpdateRoverState(Vessel vessel, bool stateActive) {
+        /// <summary>
+        /// Disable module control UI, for use from BonVoyageModule
+        /// </summary>
+        public void HideModuleControl()
+        {
+            rcVisible = false;
+        }
+
+        public void UpdateRoverState(Vessel vessel, bool stateActive) {
 			for (int i = 0; i < activeRovers.Count; i++) {
 				var rover = activeRovers [i];
 				if (rover.vessel == vessel) {
