@@ -190,7 +190,7 @@ namespace BonVoyage
 			vesselConfigNode.SetValue("lat", vessel.latitude.ToString());
 			vesselConfigNode.SetValue("lon", vessel.longitude.ToString());
 			vesselConfigNode.SetValue("alt", vessel.altitude.ToString());
-			vesselConfigNode.SetValue("landedAt", vessel.mainBody.theName);
+			vesselConfigNode.SetValue("landedAt", vessel.mainBody.bodyDisplayName);
 			BVModule.SetValue("distanceTravelled", (distanceTravelled).ToString());
 			BVModule.SetValue("lastTime", currentTime.ToString());
 			vessel.protoVessel = new ProtoVessel(vesselConfigNode, HighLogic.CurrentGame);
