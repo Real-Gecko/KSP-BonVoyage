@@ -163,13 +163,13 @@ namespace BonVoyage
 //			tdWhite.Apply ();
 		}
 		internal static void LoadTextures() {
-			var bytes = System.IO.File.ReadAllBytes ("GameData/BonVoyage/Textures/window-back.png");
+			var bytes = System.IO.File.ReadAllBytes (AssemblyUtils.GetModulePath() + "/Textures/window-back.png");
 			tWindowBack.LoadImage (bytes);
 
-			bytes = System.IO.File.ReadAllBytes ("GameData/BonVoyage/Textures/button-back.png");
+			bytes = System.IO.File.ReadAllBytes (AssemblyUtils.GetModulePath() + "/Textures/button-back.png");
 			tButtonBack.LoadImage (bytes);
 
-			bytes = System.IO.File.ReadAllBytes ("GameData/BonVoyage/Textures/button-hover-back.png");
+			bytes = System.IO.File.ReadAllBytes (AssemblyUtils.GetModulePath() + "/Textures/button-hover-back.png");
 			tButtonHover.LoadImage (bytes);
 		}
 	}

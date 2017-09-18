@@ -25,6 +25,18 @@ namespace BonVoyage
             return result;
         }
 
+        /// <summary>
+        /// Get path of BonVoyage module
+        /// </summary>
+        /// <returns></returns>
+        internal static string GetModulePath()
+        {
+            string codeBase = System.Reflection.Assembly.GetExecutingAssembly().CodeBase;
+            UriBuilder uri = new UriBuilder(codeBase);
+            string path = Uri.UnescapeDataString(uri.Path);
+            path = System.IO.Path.GetDirectoryName(path);
+            return path;
+        }
     }
 
 }
