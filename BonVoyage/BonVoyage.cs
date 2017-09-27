@@ -348,7 +348,8 @@ namespace BonVoyage
 			guiVisible = false;
 		}
 
-		public void onToggle() {
+		public void onToggle()
+        {
 			guiVisible = !guiVisible;
 		}
 
@@ -365,18 +366,18 @@ namespace BonVoyage
 			for (int i = 0; i < activeRovers.Count; i++) {
 				var rover = activeRovers [i];
 				switch (rover.status) {
-				case "current":
-					GUI.contentColor = Color.white;
-					break;
-				case "roving":
-					GUI.contentColor = Palette.green;
-					break;
-				case "idle":
-					GUI.contentColor = Palette.yellow;
-					break;
-				case "awaiting sunlight":
-					GUI.contentColor = Palette.red;
-					break;
+				    case "current":
+					    GUI.contentColor = Color.white;
+					    break;
+				    case "roving":
+					    GUI.contentColor = Palette.green;
+					    break;
+				    case "idle":
+					    GUI.contentColor = Palette.yellow;
+					    break;
+				    case "awaiting sunlight":
+					    GUI.contentColor = Palette.red;
+					    break;
 				}
 				GUILayout.BeginHorizontal ();
 				if (Layout.Button (rover.vessel.vesselName, GUILayout.Width(200))) {
@@ -397,7 +398,7 @@ namespace BonVoyage
 					}
 				}
                 
-				Layout.Label (rover.vessel.mainBody.bodyName, GUILayout.Width(75));
+				Layout.Label (rover.vessel.mainBody.bodyDisplayName.Replace("^N", ""), GUILayout.Width(75));
 				Layout.Label (rover.status, GUILayout.Width (125));
 
 				if (rover.status == "roving" || rover.status == "awaiting sunlight") {
@@ -557,31 +558,32 @@ namespace BonVoyage
 			}
 		}
 
-		public void LoadRovers()
-		{
-			activeRovers.Clear();
-			foreach (var vessel in FlightGlobals.Vessels)
-			{
-				ConfigNode vesselConfigNode = new ConfigNode();
-				vessel.protoVessel.Save(vesselConfigNode);
+        public void LoadRovers()
+        {
+            activeRovers.Clear();
+            foreach (var vessel in FlightGlobals.Vessels)
+            {
+                ConfigNode vesselConfigNode = new ConfigNode();
+                vessel.protoVessel.Save(vesselConfigNode);
 
-				foreach(ConfigNode part in vesselConfigNode.GetNodes("PART"))
+                foreach (ProtoPartSnapshot part in vessel.protoVessel.protoPartSnapshots)
                 {
-					ConfigNode BVModule = part.GetNode("MODULE", "name", "BonVoyageModule");
-					if (BVModule != null)
+                    ProtoPartModuleSnapshot module = part.FindModule("BonVoyageModule");
+                    if (module != null)
                     {
+                        ConfigNode BVModule = module.moduleValues;
                         bool isShutdown = false;
                         if (BVModule.HasValue("isShutdown")) // Backward compatibility
                             isShutdown = bool.Parse(BVModule.GetValue("isShutdown"));
                         if (vessel.isActiveVessel)
                             isShutdown = vessel.FindPartModuleImplementing<BonVoyageModule>().isShutdown;
-
                         if (!isShutdown)
-                            activeRovers.Add (new ActiveRover (vessel, BVModule, vesselConfigNode));
-						break;
-					}
-				}
-			}
-		}
+                            activeRovers.Add(new ActiveRover(vessel, BVModule));
+                        break;
+                    }
+                }
+            }
+        }
+
 	}
 }

@@ -10,7 +10,6 @@ namespace BonVoyage
 		public double toTravel;
 
 		public Vessel vessel;
-		private ConfigNode vesselConfigNode;
 		private double lastTime;
 		public double LastTime { get { return lastTime; } }
 		private double targetLatitude;
@@ -38,9 +37,8 @@ namespace BonVoyage
 		/// <param name="v">Vessel.</param>
 		/// <param name="module">Bon Voyage Module.</param>
 		/// <param name="vcf">Vessel Config Node.</param>
-		public ActiveRover(Vessel v, ConfigNode module, ConfigNode vcf) {
+		public ActiveRover(Vessel v, ConfigNode module) {
 			vessel = v;
-			vesselConfigNode = vcf;
 
 			BVModule = module;
 
@@ -115,7 +113,6 @@ namespace BonVoyage
                 status = "awaiting sunlight";
 				lastTime = currentTime;
 				BVModule.SetValue("lastTime", currentTime.ToString());
-				vessel.protoVessel = new ProtoVessel(vesselConfigNode, HighLogic.CurrentGame);
 				return;
 			}
 
@@ -141,49 +138,55 @@ namespace BonVoyage
 					BVModule.SetValue ("distanceTravelled", distanceToTarget.ToString ());
 					BVModule.SetValue ("pathEncoded", "");
 
-					if (BonVoyage.Instance.AutoDewarp) {
+                    if (BonVoyage.Instance.AutoDewarp) {
 						if (TimeWarp.CurrentRate > 3)
 							TimeWarp.SetRate (3, true);
 						if (TimeWarp.CurrentRate > 0)
 							TimeWarp.SetRate (0, false);
-						ScreenMessages.PostScreenMessage (vessel.vesselName + " has arrived to destination at " + vessel.mainBody.name);
+						ScreenMessages.PostScreenMessage (vessel.vesselName + " has arrived to destination at " + vessel.mainBody.bodyDisplayName.Replace("^N", ""));
 					}
 					HoneyImHome ();
 				}
 				status = "idle";
 			}
 			else {
-				int step = Convert.ToInt32(Math.Floor(distanceTravelled / PathFinder.StepSize));
-				double remainder = distanceTravelled % PathFinder.StepSize;
+                try // There is sometimes exception during scene change to flight scene
+                {
+                    int step = Convert.ToInt32(Math.Floor(distanceTravelled / PathFinder.StepSize));
+                    double remainder = distanceTravelled % PathFinder.StepSize;
 
-				if (step < path.Count - 1)
-					bearing = GeoUtils.InitialBearing(
-						path[step].latitude,
-						path[step].longitude,
-						path[step + 1].latitude,
-						path[step + 1].longitude
-					);
-				else
-					bearing = GeoUtils.InitialBearing(
-						path[step].latitude,
-						path[step].longitude,
-						targetLatitude,
-						targetLongitude
-					);
+                    if (step < path.Count - 1)
+                        bearing = GeoUtils.InitialBearing(
+                            path[step].latitude,
+                            path[step].longitude,
+                            path[step + 1].latitude,
+                            path[step + 1].longitude
+                        );
+                    else
+                        bearing = GeoUtils.InitialBearing(
+                            path[step].latitude,
+                            path[step].longitude,
+                            targetLatitude,
+                            targetLongitude
+                        );
 
-				double[] newCoordinates = GeoUtils.GetLatitudeLongitude(
-					path[step].latitude,
-					path[step].longitude,
-					bearing,
-					remainder,
-					vessel.mainBody.Radius
-				);
-                
-				if (!MoveSafe (newCoordinates [0], newCoordinates [1])) {
-					distanceTravelled -= deltaS;
-					status = "idle";
-				} else
-					status = "roving";
+                    double[] newCoordinates = GeoUtils.GetLatitudeLongitude(
+                        path[step].latitude,
+                        path[step].longitude,
+                        bearing,
+                        remainder,
+                        vessel.mainBody.Radius
+                    );
+
+                    if (!MoveSafe(newCoordinates[0], newCoordinates[1]))
+                    {
+                        distanceTravelled -= deltaS;
+                        status = "idle";
+                    }
+                    else
+                        status = "roving";
+                }
+                catch { };
 			}
 			Save (currentTime);
 		}
@@ -193,14 +196,16 @@ namespace BonVoyage
 		/// </summary>
 		public void Save(double currentTime) {
 			lastTime = currentTime;
-			vesselConfigNode.SetValue("lat", vessel.latitude.ToString());
-			vesselConfigNode.SetValue("lon", vessel.longitude.ToString());
-			vesselConfigNode.SetValue("alt", vessel.altitude.ToString());
-			vesselConfigNode.SetValue("landedAt", vessel.mainBody.bodyDisplayName);
-			BVModule.SetValue("distanceTravelled", (distanceTravelled).ToString());
+
+            BVModule.SetValue("distanceTravelled", (distanceTravelled).ToString());
 			BVModule.SetValue("lastTime", currentTime.ToString());
-			vessel.protoVessel = new ProtoVessel(vesselConfigNode, HighLogic.CurrentGame);
-		}
+
+            vessel.protoVessel.latitude = vessel.latitude;
+            vessel.protoVessel.longitude = vessel.longitude;
+            vessel.protoVessel.altitude = vessel.altitude;
+            vessel.protoVessel.landedAt = vessel.mainBody.bodyName;
+            vessel.protoVessel.displaylandedAt = vessel.mainBody.bodyDisplayName.Replace("^N", "");
+        }
 
 		/// <summary>
 		/// Prevent crazy torpedoing active vessel :D
@@ -236,7 +241,7 @@ namespace BonVoyage
                 " has arrived to destination\n<color=#AED6EE>LAT: " +
                 targetLatitude.ToString ("F2") + "</color>\n<color=#AED6EE>LON: " +
                 targetLongitude.ToString ("F2") +
-                "</color>\n<color=#82BCE5>At " + vessel.mainBody.name + ".</color>\n" +
+                "</color>\n<color=#82BCE5>At " + vessel.mainBody.bodyDisplayName.Replace("^N", "") + ".</color>\n" +
                 "Distance travelled: " +
                 "<color=#74B4E2>" + distanceTravelled.ToString ("N") + "</color> meters",
 				//------------------------------------------
