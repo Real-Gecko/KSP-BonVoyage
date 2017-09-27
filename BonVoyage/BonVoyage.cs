@@ -254,7 +254,7 @@ namespace BonVoyage
 					onToggle();
 				};
 			}
-			else if ((appLauncherButton == null) && !useToolbar) // App launcher button was created even with useToolbar switch set to true
+			else if ((appLauncherButton == null) && (!useToolbar || !ToolbarManager.ToolbarAvailable)) // App launcher button was created even with useToolbar switch set to true
             {
 				appLauncherButton = ApplicationLauncher.Instance.AddModApplication(
 					onAppTrue,

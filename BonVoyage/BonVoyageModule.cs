@@ -101,22 +101,42 @@ namespace BonVoyage
             else
                 solarPowered = false;
 
-            // If alternative power sources produce more then required
-            // Rover will ride forever :D
-            //if (otherPower >= powerRequired)
-			//	solarPowered = false;
-			//else
-			//	solarPowered = true;
+            this.isManned = (this.vessel.GetCrewCount() > 0);
 
-            // Average speed will vary depending on number of wheels online from 50 to 70 percent
+            // Pilots and Scouts (USI) increase base average speed
+            int crewSpeedBonus = 0;
+            if (this.isManned)
+            {
+                int maxPilotLevel = -1;
+                int maxScoutLevel = -1;
+                foreach (ProtoCrewMember crewMember in this.vessel.GetVesselCrew())
+                {
+                    switch (crewMember.trait)
+                    {
+                        case "Pilot":
+                            if (maxPilotLevel < crewMember.experienceLevel)
+                                maxPilotLevel = crewMember.experienceLevel;
+                            break;
+                        case "Scout":
+                            if (maxScoutLevel < crewMember.experienceLevel)
+                                maxScoutLevel = crewMember.experienceLevel;
+                            break;
+                    }
+                }
+                if (maxPilotLevel > 0)
+                    crewSpeedBonus = 5 * maxPilotLevel; // up to 25% for pilot
+                else if (maxScoutLevel > 0)
+                    crewSpeedBonus = 2 * maxScoutLevel; // up to 10% for scout
+            }
+
+            // Average speed will vary depending on number of wheels online and crew present from 50 to 95 percent
             // of average wheels' max speed
             if (testResult.online != 0)
-                averageSpeed = testResult.maxSpeedSum / testResult.online / 100 * Math.Min(70, (40 + 5 * testResult.online));
+                averageSpeed = testResult.maxSpeedSum / testResult.online / 100 * (Math.Min(70, (40 + 5 * testResult.online)) + crewSpeedBonus);
             else
                 averageSpeed = 0;
 
             // Unmanned rovers drive with 80% speed penalty
-            this.isManned = (this.vessel.GetCrewCount() > 0);
             if (!this.isManned)
                 averageSpeed = averageSpeed * 0.2;
 
@@ -311,6 +331,7 @@ namespace BonVoyage
 			targetLongitude = 0;
 			distanceTravelled = 0;
 			distanceToTarget = 0;
+            pathEncoded = "";
 			BonVoyage.Instance.UpdateRoverState(this.vessel, false);
 		}
 
