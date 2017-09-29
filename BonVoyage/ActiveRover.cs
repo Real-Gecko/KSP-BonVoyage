@@ -7,6 +7,7 @@ namespace BonVoyage
 {
 	public class ActiveRover {
 		public string status;
+        public string status2;
 		public double toTravel;
 
 		public Vessel vessel;
@@ -77,7 +78,9 @@ namespace BonVoyage
 		/// Update rover.
 		/// </summary>
 		/// <param name="currentTime">Current time.</param>
-		public void Update(double currentTime) {
+		public void Update(double currentTime)
+        {
+            status2 = "";
 			if (vessel.isActiveVessel)
 			{
 				status = "current";
@@ -97,13 +100,22 @@ namespace BonVoyage
 
             // Speed penalties at twighlight and at night
             if (angle > 90 && isManned)
-				speedMultiplier = 0.25;
-			else if (angle > 85 && isManned)
-				speedMultiplier = 0.5;
-			else if (angle > 80 && isManned)
-				speedMultiplier = 0.75;
-			else
-				speedMultiplier = 1.0;
+            {
+                speedMultiplier = 0.25;
+                status2 = " (night)";
+            }
+            else if (angle > 85 && isManned)
+            {
+                speedMultiplier = 0.5;
+                status2 = " (twilight)";
+            }
+            else if (angle > 80 && isManned)
+            {
+                speedMultiplier = 0.75;
+                status2 = " (twilight)";
+            }
+            else
+                speedMultiplier = 1.0;
 
             // No moving at night, or when there's not enougth solar light for solar powered rovers
             //if (angle > 90 && solarPowered)

@@ -52,12 +52,17 @@ namespace BonVoyage
 		private bool useToolbar;
 		private bool guiVisible;
 		private bool rcVisible;
-		private bool globalHidden;
+        private bool tooltipVisible;
+        private bool globalHidden;
 		private Rect guiRect;
 		private int guiId;
 		Vector2 mainWindowScrollPosition;
 		private Rect rcRect;
 		private int rcGuiId;
+        private int tooltipId;
+        private string tooltip;
+        private string tooltipTitle;
+        private Vector2 tooltipPosition;
 
 		/// <summary>
 		/// Instead of constructor.
@@ -74,12 +79,17 @@ namespace BonVoyage
 			toolbarButton = null;
 			guiVisible = false;
 			rcVisible = false;
-			globalHidden = false;
+            tooltipVisible = false;
+            tooltip = "";
+            tooltipTitle = "";
+            tooltipPosition = new Vector2(Screen.width / 2, Screen.height / 2);
+            globalHidden = false;
 			gamePaused = false;
 
 			guiId = GUIUtility.GetControlID(FocusType.Passive);
 			rcGuiId = GUIUtility.GetControlID (FocusType.Passive);
-			config = PluginConfiguration.CreateForType<BonVoyage>();
+            tooltipId = GUIUtility.GetControlID(FocusType.Passive);
+            config = PluginConfiguration.CreateForType<BonVoyage>();
 			config.load();
 			autoDewarp = config.GetValue<bool>("autoDewarp", false);
 
@@ -92,7 +102,7 @@ namespace BonVoyage
 			sample.center = new Vector2(Screen.width / 2, Screen.height / 2);
 			guiRect = config.GetValue<Rect>("guiRect", new Rect(sample));
 			sample.width = 400;
-			sample.height = 500;
+			sample.height = 300;
 			sample.center = new Vector2(Screen.width / 2, Screen.height / 2);
 			rcRect = config.GetValue<Rect> ("rcRect", new Rect(sample));
 			useKSPSkin = config.GetValue<bool> ("useKSPSkin", false);
@@ -335,6 +345,11 @@ namespace BonVoyage
 					DrawRcGUI,
 					"Bon Voyage control"
 				);
+
+                if (tooltipVisible)
+                {
+                    Layout.Window(tooltipId, new Rect(tooltipPosition, new Vector2(400, 50)), DrawTooltip, tooltipTitle);
+                }
 			}
 		}
 
@@ -354,11 +369,21 @@ namespace BonVoyage
 		}
 
 
-		/// <summary>
-		/// Draws main UI
-		/// </summary>
-		/// <param name="guiId">GUI identifier.</param>
-		public void DrawGUI(int guiId)
+        public void DrawTooltip(int guiID)
+        {
+            GUILayout.BeginVertical();
+            GUILayout.BeginHorizontal();
+            Layout.Label(tooltip);
+            GUILayout.EndHorizontal();
+            GUILayout.EndVertical();
+        }
+
+
+        /// <summary>
+        /// Draws main UI
+        /// </summary>
+        /// <param name="guiId">GUI identifier.</param>
+        public void DrawGUI(int guiId)
 		{
 			double currentTime = Planetarium.GetUniversalTime();
 			GUILayout.BeginVertical();
@@ -399,7 +424,7 @@ namespace BonVoyage
 				}
                 
 				Layout.Label (rover.vessel.mainBody.bodyDisplayName.Replace("^N", ""), GUILayout.Width(75));
-				Layout.Label (rover.status, GUILayout.Width (125));
+				Layout.Label (rover.status + (rover.status == "roving" ? rover.status2 : ""), GUILayout.Width (125));
 
 				if (rover.status == "roving" || rover.status == "awaiting sunlight") {
 					Layout.Label (
@@ -468,15 +493,16 @@ namespace BonVoyage
 			}
 			double currentTime = Planetarium.GetUniversalTime();
 			GUILayout.BeginVertical ();
-			TimeSpan t = TimeSpan.FromSeconds (currentTime - currentModule.lastTime);
-			Layout.Label (
-				string.Format (
-					"Idle for {0:D2}h:{1:D2}m:{2:D2}s",
-					t.Hours,
-					t.Minutes,
-					t.Seconds
-				)
-			);
+
+			//TimeSpan t = TimeSpan.FromSeconds (currentTime - currentModule.lastTime);
+			//Layout.Label (
+			//	string.Format (
+			//		"Idle for {0:D2}h:{1:D2}m:{2:D2}s",
+			//		t.Hours,
+			//		t.Minutes,
+			//		t.Seconds
+			//	)
+			//);
 
             // If required power is greater ther total power generated, then average speed can be lowered up to 50%
             double speedReduction = 0;
@@ -485,15 +511,49 @@ namespace BonVoyage
 
             Layout.LabelAndText ("Target latitude", currentModule.targetLatitude.ToString());
 			Layout.LabelAndText ("Target longitude", currentModule.targetLongitude.ToString());
-			Layout.LabelAndText ("Distance to target", currentModule.distanceToTarget.ToString("N0"));
-			Layout.LabelAndText ("Distance travelled", currentModule.distanceTravelled.ToString("N0"));
-			Layout.LabelAndText ("Average speed", currentModule.averageSpeed.ToString("F"));
-			Layout.LabelAndText ("Solar power", currentModule.solarPower.ToString("F"));
-			Layout.LabelAndText ("Other power", currentModule.otherPower.ToString("F"));
-			Layout.LabelAndText ("Power required", currentModule.powerRequired.ToString("F")
-                + (speedReduction == 0 ? "" : (((speedReduction > 0) && (speedReduction <= 50)) ? " (Not enough power, average speed was reduced by " + speedReduction.ToString("F") + "%)" : "(Not enough power!)")));
-            Layout.LabelAndText ("Solar powered", currentModule.solarPowered.ToString ());
-			Layout.LabelAndText ("Is manned", currentModule.isManned.ToString ());
+
+            Layout.LabelAndText("Distance to target", (currentModule.distanceToTarget - currentModule.distanceTravelled).ToString("N0"));
+            //Layout.LabelAndText ("Distance to target", currentModule.distanceToTarget.ToString("N0"));
+            //Layout.LabelAndText ("Distance travelled", currentModule.distanceTravelled.ToString("N0"));
+
+            if (Layout.LabelTextAndButton("Average speed", currentModule.averageSpeed.ToString("F")))
+            {
+                tooltipVisible = !tooltipVisible;
+                tooltipTitle = "Average speed";
+                if (currentModule.averageSpeed > 0)
+                {
+                    tooltip = "Average speed base: " + currentModule.maxSpeedBase.ToString("F") + "\n";
+                    tooltip += "Online wheels modifier: " + currentModule.wheelsPercentualModifier.ToString() + "%\n";
+                    if (currentModule.isManned)
+                        tooltip += "Pilot/Scout bonus (adds to wheels modifier): " + currentModule.crewSpeedBonus.ToString() + "%\n";
+                    else
+                        tooltip += "Unmanned rover penalty: 80%";
+                    if (speedReduction > 0)
+                        tooltip += "Unsufficient power penalty: " + (speedReduction > 50 ? "100" : speedReduction.ToString("F")) + "%\n";
+                    tooltip += "Speed at night: " + currentModule.averageSpeedAtNight.ToString("F");
+                }
+                else
+                    tooltip = "Wheels aren't online";
+                tooltipPosition = new Vector2(Input.mousePosition.x, Screen.height - Input.mousePosition.y + 10);
+            }
+
+            if (Layout.LabelTextAndButton("Generated power", (currentModule.solarPower + currentModule.otherPower).ToString("F")))
+            {
+                tooltipVisible = !tooltipVisible;
+                tooltipTitle = "Generated power";
+                tooltip = "Solar power: " + currentModule.solarPower.ToString("F") + "\n";
+                tooltip += "Generators and reactors: " + currentModule.otherPower.ToString("F");
+                tooltipPosition = new Vector2(Input.mousePosition.x, Screen.height - Input.mousePosition.y + 10);
+            }
+
+            //Layout.LabelAndText ("Solar power", currentModule.solarPower.ToString("F"));
+            //Layout.LabelAndText ("Other power", currentModule.otherPower.ToString("F"));
+
+            Layout.LabelAndText("Required power", currentModule.powerRequired.ToString("F")
+                + (speedReduction == 0 ? "" : (((speedReduction > 0) && (speedReduction <= 50)) ? " (Not enough power, average speed was reduced by " + speedReduction.ToString("F") + "%)" : " (Not enough power!)")));
+
+            //Layout.LabelAndText ("Solar powered", currentModule.solarPowered.ToString ());
+			//Layout.LabelAndText ("Is manned", currentModule.isManned.ToString ());
 
 			if (Layout.Button ("Pick target on map", Palette.yellow)) {
 				currentModule.PickTarget ();

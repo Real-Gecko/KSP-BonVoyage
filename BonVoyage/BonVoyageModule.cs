@@ -70,7 +70,11 @@ namespace BonVoyage
 		public double otherPower;
 		public double powerRequired;
 
-		public WheelTestResult testResult = new WheelTestResult();
+        public double maxSpeedBase;
+        public int wheelsPercentualModifier;
+        public int crewSpeedBonus;
+
+        public WheelTestResult testResult = new WheelTestResult();
 
 		public void SystemCheck() {
 			// Test stock wheels
@@ -104,7 +108,7 @@ namespace BonVoyage
             this.isManned = (this.vessel.GetCrewCount() > 0);
 
             // Pilots and Scouts (USI) increase base average speed
-            int crewSpeedBonus = 0;
+            crewSpeedBonus = 0;
             if (this.isManned)
             {
                 int maxPilotLevel = -1;
@@ -132,7 +136,12 @@ namespace BonVoyage
             // Average speed will vary depending on number of wheels online and crew present from 50 to 95 percent
             // of average wheels' max speed
             if (testResult.online != 0)
-                averageSpeed = testResult.maxSpeedSum / testResult.online / 100 * (Math.Min(70, (40 + 5 * testResult.online)) + crewSpeedBonus);
+            {
+                maxSpeedBase = testResult.maxSpeedSum / testResult.online;
+                wheelsPercentualModifier = Math.Min(70, (40 + 5 * testResult.online));
+                averageSpeed = maxSpeedBase / 100 * (wheelsPercentualModifier + crewSpeedBonus);
+                //averageSpeed = testResult.maxSpeedSum / testResult.online / 100 * (Math.Min(70, (40 + 5 * testResult.online)) + crewSpeedBonus);
+            }
             else
                 averageSpeed = 0;
 

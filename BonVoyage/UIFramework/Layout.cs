@@ -147,13 +147,32 @@ namespace BonVoyage
 			Label (label + ": ", Palette.blue);
 			Label (text, Color.white);
 			GUILayout.EndHorizontal ();
-		}
+        }
 
-		/// <summary>
-		/// Margin with the specified width.
-		/// </summary>
-		/// <param name="width">Width.</param>
-		public static void Margin(int width) {
+        /// <summary>
+        /// Creates label with "label: text" with different colors and button in one line
+        /// </summary>
+        /// <param name="label">Label.</param>
+        /// <param name="text">Text.</param>
+        public static bool LabelTextAndButton(string label, string text)
+        {
+            GUILayout.BeginHorizontal();
+            Label(label + ": ", Palette.blue);
+            Label(text, Color.white);
+            Styles.button.normal.textColor = Palette.yellow;
+            Styles.button.alignment = TextAnchor.MiddleCenter;
+            Styles.button.fixedWidth = 20;
+            bool res = GUILayout.Button("?", Styles.button);
+            Styles.button.fixedWidth = 0;
+            GUILayout.EndHorizontal();
+            return res;
+        }
+
+        /// <summary>
+        /// Margin with the specified width.
+        /// </summary>
+        /// <param name="width">Width.</param>
+        public static void Margin(int width) {
 			GUILayout.Label ("", Styles.label, GUILayout.Width(width));
 		}
 
