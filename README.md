@@ -2,6 +2,17 @@
 Rovers background processing for KSP.
 
 # Changelog
+## 0.13.1
+### Changes
+- Displayed information revision
+- Change in background processing (TAC-LS compatibility!)
+- Pilots and USI Scouts affect rover speed depending on their level
+
+### Fixes
+- Fixed drawing of the line to a target
+- Fixed wrong path to images on Linux
+- Various fixes
+
 ## 0.13.0
 ### Fixes
 - Fixed target longitude display
