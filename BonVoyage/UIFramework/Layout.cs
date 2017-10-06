@@ -154,7 +154,7 @@ namespace BonVoyage
         /// </summary>
         /// <param name="label">Label.</param>
         /// <param name="text">Text.</param>
-        public static bool LabelTextAndButton(string label, string text)
+        public static bool LabelTextAndButton(string label, string text, string tooltipText = "")
         {
             GUILayout.BeginHorizontal();
             Label(label + ": ", Palette.blue);
@@ -162,7 +162,7 @@ namespace BonVoyage
             Styles.button.normal.textColor = Palette.yellow;
             Styles.button.alignment = TextAnchor.MiddleCenter;
             Styles.button.fixedWidth = 20;
-            bool res = GUILayout.Button("?", Styles.button);
+            bool res = (tooltipText.Length > 0 ? GUILayout.Button(new GUIContent("?", tooltipText), Styles.button) : GUILayout.Button("?", Styles.button));
             Styles.button.fixedWidth = 0;
             GUILayout.EndHorizontal();
             return res;

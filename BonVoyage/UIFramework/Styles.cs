@@ -32,8 +32,9 @@ namespace BonVoyage
 		internal static GUIStyle verticalScrollbarUpButton;
 		internal static GUIStyle verticalScrollbarDownButton;
 		internal static GUIStyle scrollView;
+        internal static GUIStyle tooltip;
 
-		internal static GUIStyle selectionGrid;
+        internal static GUIStyle selectionGrid;
 
 		internal const int fontSize = 14;
 		internal static Font mainFont = GUI.skin.font;
@@ -323,7 +324,16 @@ namespace BonVoyage
 			selectionGrid = new GUIStyle (button);
 			selectionGrid.name = "BVSelectionGrid";
 			selectionGrid.alignment = TextAnchor.MiddleCenter;
-		}
+
+            // Tooltip
+            tooltip = new GUIStyle(textCommon);
+            tooltip.name = "BVTooltip";
+            tooltip.normal.background = Palette.tWindowBack;
+            tooltip.normal.textColor = Palette.blue;
+            tooltip.wordWrap = true;
+            tooltip.stretchWidth = false;
+            tooltip.border = Offsets.square4;
+        }
 
 		/// <summary>
 		/// Do not use this function in your mod, as it overrides default unity skin
