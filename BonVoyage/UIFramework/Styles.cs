@@ -3,7 +3,6 @@
  * https://github.com/Real-Gecko/Unity5-UIFramework/blob/master/LICENSE.md
 */
 
-using System;
 using UnityEngine;
 
 namespace BonVoyage

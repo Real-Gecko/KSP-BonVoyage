@@ -7,7 +7,6 @@
 - something is wrong with landedAt field on vessel launch
 - check for closest star
 - background for target picker information
-- pilots affect average speed
 - rover may stuck
 - direct coordinates input
 - reduce pathfinding step

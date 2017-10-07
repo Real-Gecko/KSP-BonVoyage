@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
-using System.Linq;
 
 namespace BonVoyage
 {
@@ -113,6 +112,7 @@ namespace BonVoyage
             {
                 int maxPilotLevel = -1;
                 int maxScoutLevel = -1;
+                int maxDriverLevel = -1;
                 foreach (ProtoCrewMember crewMember in this.vessel.GetVesselCrew())
                 {
                     switch (crewMember.trait)
@@ -125,12 +125,19 @@ namespace BonVoyage
                             if (maxScoutLevel < crewMember.experienceLevel)
                                 maxScoutLevel = crewMember.experienceLevel;
                             break;
+                        default:
+                            if (crewMember.HasEffect("AutopilotSkill"))
+                                if (maxDriverLevel < crewMember.experienceLevel)
+                                    maxDriverLevel = crewMember.experienceLevel;
+                            break;
                     }
                 }
                 if (maxPilotLevel > 0)
-                    crewSpeedBonus = 5 * maxPilotLevel; // up to 25% for pilot
+                    crewSpeedBonus = 5 * maxPilotLevel; // up to 25% for a Pilot
+                else if (maxDriverLevel > 0)
+                    crewSpeedBonus = 3 * maxDriverLevel; // up to 15% for any driver (has AutopilotSkill skill)
                 else if (maxScoutLevel > 0)
-                    crewSpeedBonus = 2 * maxScoutLevel; // up to 10% for scout
+                    crewSpeedBonus = 2 * maxScoutLevel; // up to 10% for a Scout (Scouts disregard safety)
             }
 
             // Average speed will vary depending on number of wheels online and crew present from 50 to 95 percent
@@ -610,12 +617,13 @@ namespace BonVoyage
 				}
 			}
 
-			foreach (Part part in wheels) {
-				ModuleWheelBase wheelBase = part.FindModuleImplementing<ModuleWheelBase> ();
+			for (int i = 0; i < wheels.Count;  i++)
+            {
+				ModuleWheelBase wheelBase = wheels[i].FindModuleImplementing<ModuleWheelBase> ();
 				if (wheelBase.wheelType == WheelType.LEG)
 					continue;
 
-				ModuleWheels.ModuleWheelDamage wheelDamage = part.FindModuleImplementing<ModuleWheels.ModuleWheelDamage> ();
+				ModuleWheels.ModuleWheelDamage wheelDamage = wheels[i].FindModuleImplementing<ModuleWheels.ModuleWheelDamage> ();
 				// Malemute and Karibou wheels do not implement moduleDamage, so they're unbreakable?
 				if (wheelDamage != null) {
 					// Wheel is damaged
@@ -632,7 +640,7 @@ namespace BonVoyage
 				} else
 					operable++;
 
-				ModuleWheels.ModuleWheelMotor wheelMotor = part.FindModuleImplementing<ModuleWheels.ModuleWheelMotor> ();
+				ModuleWheels.ModuleWheelMotor wheelMotor = wheels[i].FindModuleImplementing<ModuleWheels.ModuleWheelMotor> ();
 				if (wheelMotor != null) {
 					// Wheel is on
 					if (wheelMotor.motorEnabled) {
@@ -670,9 +678,10 @@ namespace BonVoyage
 				}
 			}
 
-			foreach (var part in KSPWheels) {
+			for (int i = 0; i < KSPWheels.Count;  i++)
+            {
 				// PartModuleList is not generic List<T>??? Fuck this API!!!
-				List<PartModule> partModules = part.Modules.GetModules<PartModule>();
+				List<PartModule> partModules = KSPWheels[i].Modules.GetModules<PartModule>();
 				PartModule wheelBase = partModules.Find (t => t.moduleName == "KSPWheelBase");
 				// Wheel is damaged
 				if (wheelBase.Fields.GetValue ("persistentState").ToString() == "BROKEN") {
@@ -709,7 +718,7 @@ namespace BonVoyage
 					}
 				}
 				double scale = double.Parse (wheelBase.Fields.GetValue ("scale").ToString ());
-				powerRequired += KSPWheelPower (part.name, scale);
+				powerRequired += KSPWheelPower (KSPWheels[i].name, scale);
 			}
 			return new WheelTestResult (powerRequired, maxSpeedSum, inTheAir, operable, damaged, online);
 		}
