@@ -2,6 +2,15 @@
 Rovers background processing for KSP.
 
 # Changelog
+## 0.13.2
+### Changes
+- KSP 1.3.1 compatibility
+- Tooltip change
+- Pilots, USI Scouts and anyone with AutopilotSkill affect speed
+
+### Fixes
+- Various fixes
+
 ## 0.13.1
 ### Changes
 - Displayed information revision

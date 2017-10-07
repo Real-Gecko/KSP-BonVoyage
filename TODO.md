@@ -4,7 +4,6 @@
 - notify about lazybones
 - involve mass and gravity into average speed calculations
 - involve slope rate into average speed calculations
-- something is wrong with landedAt field on vessel launch
 - check for closest star
 - background for target picker information
 - rover may stuck

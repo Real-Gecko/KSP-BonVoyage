@@ -302,8 +302,8 @@ namespace BonVoyage
 		{
             if (gamePaused || globalHidden) return;
 
-			if (MapView.MapIsEnabled && HighLogic.LoadedSceneIsFlight && wayPoints.Count > 0)
-				GLUtils.DrawCurve (wayPoints);
+            if (MapView.MapIsEnabled && HighLogic.LoadedSceneIsFlight && wayPoints.Count > 0)
+                GLUtils.DrawCurve(wayPoints);
 
 			if (InputLockManager.GetControlLock("BonVoyageInputLock") != 0)
 			{
@@ -500,7 +500,7 @@ namespace BonVoyage
                 tooltip = "Average speed base: " + currentModule.maxSpeedBase.ToString("F") + "\n";
                 tooltip += "Online wheels modifier: " + currentModule.wheelsPercentualModifier.ToString() + "%\n";
                 if (currentModule.isManned)
-                    tooltip += "Pilot/Scout bonus (adds to wheels modifier): " + currentModule.crewSpeedBonus.ToString() + "%\n";
+                    tooltip += "Driver bonus: " + currentModule.crewSpeedBonus.ToString() + "%\n";
                 else
                     tooltip += "Unmanned rover penalty: 80%\n";
                 if (speedReduction > 0)
