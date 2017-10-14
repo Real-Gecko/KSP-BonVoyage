@@ -82,17 +82,17 @@ namespace BonVoyage
 			// Test KSPWheels
 			WheelTestResult KSPWheelsTest = CheckKSPWheels ();
 
-			// Combine the two
-			testResult.powerRequired = wheelsTest.powerRequired + KSPWheelsTest.powerRequired;
+            // Combine the two
+            testResult.powerRequired = wheelsTest.powerRequired + KSPWheelsTest.powerRequired;
 			testResult.maxSpeedSum = wheelsTest.maxSpeedSum + KSPWheelsTest.maxSpeedSum;
-			testResult.inTheAir = wheelsTest.inTheAir + KSPWheelsTest.inTheAir;
+            testResult.inTheAir = wheelsTest.inTheAir + KSPWheelsTest.inTheAir;
 			testResult.operable = wheelsTest.operable + KSPWheelsTest.operable;
 			testResult.damaged = wheelsTest.damaged + KSPWheelsTest.damaged;
 			testResult.online = wheelsTest.online + KSPWheelsTest.online;
 
-			// Generally moving at high speed requires less power than wheels' max consumption
-			// To start BV online wheels consumption must be less than or equal to 35% of max power production
-			powerRequired = wheelsTest.powerRequired / 100 * 35;
+            // Generally moving at high speed requires less power than wheels' max consumption
+            // To start BV online wheels consumption must be less than or equal to 35% of max power production
+            powerRequired = testResult.powerRequired / 100 * 35;
 
 			// Check for power production
 			solarPower = CalculateSolarPower();
@@ -133,9 +133,9 @@ namespace BonVoyage
                     }
                 }
                 if (maxPilotLevel > 0)
-                    crewSpeedBonus = 5 * maxPilotLevel; // up to 25% for a Pilot
+                    crewSpeedBonus = 6 * maxPilotLevel; // up to 30% for a Pilot
                 else if (maxDriverLevel > 0)
-                    crewSpeedBonus = 3 * maxDriverLevel; // up to 15% for any driver (has AutopilotSkill skill)
+                    crewSpeedBonus = 4 * maxDriverLevel; // up to 20% for any driver (has AutopilotSkill skill)
                 else if (maxScoutLevel > 0)
                     crewSpeedBonus = 2 * maxScoutLevel; // up to 10% for a Scout (Scouts disregard safety)
             }
@@ -145,9 +145,10 @@ namespace BonVoyage
             if (testResult.online != 0)
             {
                 maxSpeedBase = testResult.maxSpeedSum / testResult.online;
+
                 wheelsPercentualModifier = Math.Min(70, (40 + 5 * testResult.online));
-                averageSpeed = maxSpeedBase / 100 * (wheelsPercentualModifier + crewSpeedBonus);
-                //averageSpeed = testResult.maxSpeedSum / testResult.online / 100 * (Math.Min(70, (40 + 5 * testResult.online)) + crewSpeedBonus);
+
+                averageSpeed = maxSpeedBase * wheelsPercentualModifier / 100 * (1 + crewSpeedBonus / 100);
             }
             else
                 averageSpeed = 0;
@@ -162,19 +163,19 @@ namespace BonVoyage
             else
                 averageSpeedAtNight = 0;
 
-            // If required power is greater then total power generated, then average speed can be lowered up to 50%
+            // If required power is greater then total power generated, then average speed can be lowered up to 75%
             if (powerRequired > (solarPower + otherPower))
             {
                 double speedReduction = (powerRequired - (solarPower + otherPower)) / powerRequired;
-                if (speedReduction <= 0.5)
+                if (speedReduction <= 0.75)
                     averageSpeed = averageSpeed * (1 - speedReduction);
             }
 
-            // If required power is greater then other power generated, then average speed at night can be lowered up to 50%
+            // If required power is greater then other power generated, then average speed at night can be lowered up to 75%
             if (powerRequired > otherPower)
             {
                 double speedReduction = (powerRequired - otherPower) / powerRequired;
-                if (speedReduction <= 0.5)
+                if (speedReduction <= 0.75)
                     averageSpeedAtNight = averageSpeedAtNight * (1 - speedReduction);
                 else
                     averageSpeedAtNight = 0;
@@ -324,7 +325,7 @@ namespace BonVoyage
 
                 // Quick and dirty hack, when Kerbalism is present -> disable power check
                 // Kerbalism changes power production and rovers has zero chargeRate
-                if ((speedReduction > 0.5) && !AssemblyUtils.AssemblyIsLoaded("Kerbalism"))
+                if ((speedReduction > 0.75) && !AssemblyUtils.AssemblyIsLoaded("Kerbalism"))
                 {
                     ScreenMessages.PostScreenMessage("Your power production is low", 5);
                     ScreenMessages.PostScreenMessage("You need MOAR solar panels", 6);
@@ -512,7 +513,7 @@ namespace BonVoyage
 					if (module.moduleName == "FNGenerator") {
 						string maxPowerStr = module.Fields.GetValue ("MaxPowerStr").ToString ();
 						double maxPower = 0;
-						ScreenMessages.PostScreenMessage ("MAXPOWER: " + maxPowerStr);
+						
 						if (maxPowerStr.Contains ("GW"))
 							maxPower = double.Parse (maxPowerStr.Replace (" GW", "")) * 1000000;
 						else if (maxPowerStr.Contains ("MW"))
@@ -643,7 +644,8 @@ namespace BonVoyage
 				ModuleWheels.ModuleWheelMotor wheelMotor = wheels[i].FindModuleImplementing<ModuleWheels.ModuleWheelMotor> ();
 				if (wheelMotor != null) {
 					// Wheel is on
-					if (wheelMotor.motorEnabled) {
+					if (wheelMotor.motorEnabled)
+                    {
 						powerRequired += wheelMotor.avgResRate;
 						online++;
 						double maxWheelSpeed = 0;
@@ -652,7 +654,7 @@ namespace BonVoyage
 						else
 							maxWheelSpeed = wheelMotor.wheelSpeedMax;
 						maxSpeedSum += maxWheelSpeed;
-					}
+                    }
 				}
 			}
 			return new WheelTestResult (powerRequired, maxSpeedSum, inTheAir, operable, damaged, online);
@@ -705,8 +707,9 @@ namespace BonVoyage
 					if (!bool.Parse (wheelMotor.Fields.GetValue ("motorLocked").ToString ())) {
 						online++;
 						maxSpeedSum += double.Parse (wheelDamage.Fields.GetValue ("maxSafeSpeed").ToString ());
-					}
-				}
+                        powerRequired += double.Parse(wheelMotor.Fields.GetValue("maxECDraw").ToString());
+                    }
+                }
 				PartModule wheelTracks = partModules.Find (t => t.moduleName == "KSPWheelTracks");
 				if (wheelTracks != null) {
 					// Let's count one track as 2 wheels
@@ -715,50 +718,51 @@ namespace BonVoyage
 					if (!bool.Parse (wheelTracks.Fields.GetValue ("motorLocked").ToString ())) {
 						online += 2;
 						maxSpeedSum += 2 * double.Parse (wheelDamage.Fields.GetValue ("maxSafeSpeed").ToString ());
-					}
+                        powerRequired += double.Parse(wheelTracks.Fields.GetValue("maxECDraw").ToString());
+                    }
 				}
-				double scale = double.Parse (wheelBase.Fields.GetValue ("scale").ToString ());
-				powerRequired += KSPWheelPower (KSPWheels[i].name, scale);
+    //            double scale = double.Parse (wheelBase.Fields.GetValue ("scale").ToString ());
+				//powerRequired += KSPWheelPower (KSPWheels[i].name, scale);
 			}
 			return new WheelTestResult (powerRequired, maxSpeedSum, inTheAir, operable, damaged, online);
 		}
 
 		// Most elegant solution ever :D
-		private double KSPWheelPower(string name, double scale) {
-			switch (name) {
-			case "KF.SurfaceTrack":
-				return 1.28 * scale;
-			case "KF.WheelTiny":
-				return 0.5 * scale;
-			case "KF.WheelLarge":
-				return 24.7 * scale;
-			case "KF.TrackLong":
-				return 6 * scale;
-			case "KF.TrackMedium":
-				return 3.47 * scale;
-			case "KF.WheelMedium":
-				return 4 * scale;
-			case "KF.TrackRBIInverting":
-				return 10 * scale;
-			case "KF.TrackRBIMole":
-				return 57 * scale;
-			case "KF.TrackRBITiny":
-				return 2.32 * scale;
-			case "KF.ScrewDrive2":
-				return 7.37 * scale;
-			case "KF.TrackS":
-				return 1.3 * scale;
-			case "KF.WheelSmall":
-				return 4 * scale;
-			case "KF.TrackSmall":
-				return 2.5 * scale;
-			case "KF-WheelTruck-Dual":
-				return 5 * scale;
-			case "KF-WheelTruck-Single":
-				return 4 * scale;
-			default:
-				return 0;
-			}
-		}
+		//private double KSPWheelPower(string name, double scale) {
+		//	switch (name) {
+		//	case "KF.SurfaceTrack":
+		//		return 1.28 * scale;
+		//	case "KF.WheelTiny":
+		//		return 0.5 * scale;
+		//	case "KF.WheelLarge":
+		//		return 24.7 * scale;
+		//	case "KF.TrackLong":
+		//		return 6 * scale;
+		//	case "KF.TrackMedium":
+		//		return 3.47 * scale;
+		//	case "KF.WheelMedium":
+		//		return 4 * scale;
+		//	case "KF.TrackRBIInverting":
+		//		return 10 * scale;
+		//	case "KF.TrackRBIMole":
+		//		return 57 * scale;
+		//	case "KF.TrackRBITiny":
+		//		return 2.32 * scale;
+		//	case "KF.ScrewDrive2":
+		//		return 7.37 * scale;
+		//	case "KF.TrackS":
+		//		return 1.3 * scale;
+		//	case "KF.WheelSmall":
+		//		return 4 * scale;
+		//	case "KF.TrackSmall":
+		//		return 2.5 * scale;
+		//	case "KF-WheelTruck-Dual":
+		//		return 5 * scale;
+		//	case "KF-WheelTruck-Single":
+		//		return 4 * scale;
+		//	default:
+		//		return 0;
+		//	}
+		//}
 	}
 }

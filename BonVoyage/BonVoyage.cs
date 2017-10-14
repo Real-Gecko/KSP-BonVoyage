@@ -504,7 +504,7 @@ namespace BonVoyage
                 else
                     tooltip += "Unmanned rover penalty: 80%\n";
                 if (speedReduction > 0)
-                    tooltip += "Unsufficient power penalty: " + (speedReduction > 50 ? "100" : speedReduction.ToString("F")) + "%\n";
+                    tooltip += "Unsufficient power penalty: " + (speedReduction > 75 ? "100" : speedReduction.ToString("F")) + "%\n";
                 tooltip += "Speed at night: " + currentModule.averageSpeedAtNight.ToString("F");
             }
             else
@@ -519,7 +519,7 @@ namespace BonVoyage
             //Layout.LabelAndText ("Other power", currentModule.otherPower.ToString("F"));
 
             Layout.LabelAndText("Required power", currentModule.powerRequired.ToString("F")
-                + (speedReduction == 0 ? "" : (((speedReduction > 0) && (speedReduction <= 50)) ? " (Not enough power, average speed was reduced by " + speedReduction.ToString("F") + "%)" : " (Not enough power!)")));
+                + (speedReduction == 0 ? "" : (((speedReduction > 0) && (speedReduction <= 75)) ? " (Not enough power, average speed was reduced by " + speedReduction.ToString("F") + "%)" : " (Not enough power!)")));
 
             //Layout.LabelAndText ("Solar powered", currentModule.solarPowered.ToString ());
 			//Layout.LabelAndText ("Is manned", currentModule.isManned.ToString ());
