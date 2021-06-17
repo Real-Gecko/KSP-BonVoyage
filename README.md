@@ -1,3 +1,5 @@
+# Development moved here https://github.com/jarosm/KSP-BonVoyage
+
 # KSP-BonVoyage
 Rovers background processing for KSP.
 
